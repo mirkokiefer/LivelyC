@@ -17,21 +17,17 @@ static char* test_retain_counting() {
 
 static char* test_memory_stream() {
   LCMemoryStreamRef stream = LCMemoryStreamCreate(NULL);
-  FILE* fd = LCMemoryStreamFile(stream);
+  FILE* fd = LCMemoryStreamWriteFile(stream);
   fprintf(fd, "123");
   fprintf(fd, "456789");
-  fclose(fd);
-  FILE* fd2 = LCMemoryStreamFile(stream);
-  char buffer[10];
-  fscanf(fd2, "%s", buffer);
-  mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
+  fflush(fd);
   
-  fseek(fd2, -4, SEEK_END);
-  char buffer1[5];
-  fscanf(fd2, "%s", buffer1);
-  fclose(fd2);
-  mu_assert("LCMemoryStream seek", strcmp("6789", buffer1)==0);
-
+  size_t length = LCMemoryStreamLength(stream);
+  char buffer[length+1];
+  buffer[length] = '\0';
+  readFromFile(LCMemoryStreamReadFile(stream), (LCByte*)buffer, length);
+  
+  mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
   return 0;
 }
 

@@ -123,8 +123,12 @@ void stringSerialize(LCStringRef object, FILE *fd) {
 }
 
 void* stringDeserialize(LCStringRef object, FILE *fd) {
-  LCDataRef data = readFromFile(fd);
-  LCStringRef string = LCStringCreate((char*)LCDataDataRef(data));
-  objectRelease(data);
-  return string;
+  size_t length = fileLength(fd);
+  char* string = malloc(length*sizeof(char));
+  if (string) {
+    readFromFile(fd, (LCByte*)string, length);
+    return objectCreate(LCTypeString, string);
+  } else {
+    return NULL;
+  }
 }

@@ -64,16 +64,14 @@ void writeToFile(LCByte data[], size_t length, char* filePath) {
   fclose(fp);
 }
 
-LCDataRef readFromFile(FILE *fd) {
-  LCMemoryStreamRef memoryStream = LCMemoryStreamCreate();
-  FILE* writeStream = LCMemoryStreamFile(memoryStream);
-  LCByte buffer[READ_BUFFER_SIZE];
-  while(fread(buffer, sizeof(LCByte), READ_BUFFER_SIZE, fd) > 0) {
-    fwrite(buffer, sizeof(LCByte), READ_BUFFER_SIZE, writeStream);
-  }
-  LCDataRef data = LCDataCreate((LCByte*)LCMemoryStreamData(memoryStream), LCMemoryStreamLength(memoryStream));
-  objectRelease(memoryStream);
-  return data;
+size_t fileLength(FILE *fp) {
+  struct stat stat;
+  fstat(fileno(fp), &stat);
+  return stat.st_size / sizeof(LCByte);
+}
+
+void readFromFile(FILE *fp, LCByte buffer[], size_t length) {
+  fread(buffer, sizeof(LCByte), length, fp);
 }
 
 int makeDirectory(char* path) {

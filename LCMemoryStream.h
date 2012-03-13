@@ -8,8 +8,10 @@ typedef LCObjectRef LCMemoryStreamRef;
 extern LCTypeRef LCTypeMemoryStream;
 
 LCMemoryStreamRef LCMemoryStreamCreate();
-FILE* LCMemoryStreamFile(LCMemoryStreamRef streamObj);
+LCMemoryStreamRef LCMemoryStreamCreateFromFile(FILE* fp);
+FILE* LCMemoryStreamWriteFile(LCMemoryStreamRef streamObj);
+FILE* LCMemoryStreamReadFile(LCMemoryStreamRef streamObj);
 size_t LCMemoryStreamLength(LCMemoryStreamRef streamObj);
-char* LCMemoryStreamData(LCMemoryStreamRef streamObj);
+void LCMemoryStreamData(LCMemoryStreamRef streamObj, LCByte buffer[], size_t length);
 
 #endif

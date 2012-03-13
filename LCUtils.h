@@ -15,13 +15,14 @@ void LCPrintf(LCObjectRef object);
 char hexDigitToASCIChar(char hexDigit);
 char asciCharToHexDigit(char hexDigit);
 void byteToHexDigits(LCByte input, char* buffer);
-LCByte hexDigitsToByte(char* hexDigits);
+LCByte hexDigitsToByte(char *hexDigits);
 LCStringRef createHexString(LCByte data[], size_t length);
 LCDataRef createDataFromHexString(LCStringRef hexString);
 LCArrayRef createPathArray(LCStringRef path);
-void writeToFile(LCByte data[], size_t length, char* filePath);
-LCDataRef readFromFile(FILE* fd);
-int makeDirectory(char* path);
+void writeToFile(LCByte data[], size_t length, char *filePath);
+size_t fileLength(FILE *fd);
+void readFromFile(FILE *fd, LCByte buffer[], size_t length);
+int makeDirectory(char *path);
 int deleteDirectory(char *path);
 LCStringRef getHomeFolder();
 

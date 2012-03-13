@@ -1,6 +1,7 @@
 
 #include "LCData.h"
 #include "LCMemoryStream.h"
+#include "LCUtils.h"
 
 typedef struct data* dataRef;
 
@@ -21,19 +22,15 @@ struct LCType typeData = {
 
 LCTypeRef LCTypeData = &typeData;
 
-static dataRef dataStructCreate(LCByte data[], size_t length) {
+LCDataRef LCDataCreate(LCByte data[], size_t length) {
   dataRef newData = malloc(sizeof(struct data) + length*sizeof(LCByte));
   if (newData) {
     newData->length = length;
     memcpy(newData->data, data, length*sizeof(LCByte));
-    return newData;
+    return objectCreate(LCTypeData, newData);
   } else {
     return NULL;
   }
-}
-
-LCDataRef LCDataCreate(LCByte data[], size_t length) {
-  return objectCreate(LCTypeData, dataStructCreate(data, length));
 };
 
 size_t LCDataLength(LCDataRef data) {
@@ -51,13 +48,13 @@ void dataSerialize(LCDataRef data, FILE *fd) {
 }
 
 void* dataDeserialize(LCDataRef data, FILE *fd) {
-  LCMemoryStreamRef memoryStream = LCMemoryStreamCreate();
-  FILE* writeStream = LCMemoryStreamFile(memoryStream);
-  LCByte buffer[READ_BUFFER_SIZE];
-  while(fread(buffer, sizeof(LCByte), READ_BUFFER_SIZE, fd) > 0) {
-    fwrite(buffer, sizeof(LCByte), READ_BUFFER_SIZE, writeStream);
+  size_t length = fileLength(fd);
+  dataRef newData = malloc(sizeof(struct data) + length*sizeof(LCByte));
+  if (newData) {
+    newData->length = length;
+    readFromFile(fd, newData->data, length);
+    return newData;
+  } else {
+    return NULL;
   }
-  dataRef dataStruct = dataStructCreate((LCByte*)LCMemoryStreamData(memoryStream), LCMemoryStreamLength(memoryStream));
-  objectRelease(memoryStream);
-  return dataStruct;
 }
