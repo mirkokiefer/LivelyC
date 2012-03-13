@@ -7,7 +7,7 @@
 typedef LCObjectRef LCMemoryStreamRef;
 extern LCTypeRef LCTypeMemoryStream;
 
-LCMemoryStreamRef LCMemoryStreamCreate(LCContextRef context);
+LCMemoryStreamRef LCMemoryStreamCreate();
 FILE* LCMemoryStreamFile(LCMemoryStreamRef streamObj);
 size_t LCMemoryStreamLength(LCMemoryStreamRef streamObj);
 char* LCMemoryStreamData(LCMemoryStreamRef streamObj);

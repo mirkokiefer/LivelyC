@@ -1,40 +1,43 @@
 
 #include "LCString.h"
+#include "LCUtils.h"
 
 LCCompare stringCompare(LCStringRef object1, LCStringRef object2);
 void stringSerialize(LCStringRef object, FILE *fd);
-void stringDeserialize(LCStringRef object, FILE *fd);
+void* stringDeserialize(LCStringRef object, FILE *fd);
 
 
 struct LCType stringType = {
-  .compare = stringCompare
+  .immutable = true,
+  .compare = stringCompare,
+  .serialize = stringSerialize,
+  .deserialize = stringDeserialize
 };
 
 LCTypeRef LCTypeString = &stringType;
 
-LCStringRef LCStringCreate(LCContextRef context, char *string) {
+LCStringRef LCStringCreate(char *string) {
   char* stringData = malloc(strlen(string)+1);
   if (stringData) {
-    LCStringRef stringObject = objectCreate(context, LCTypeString, NULL);
     strcpy(stringData, string);
-    objectSetData(stringObject, stringData);
+    LCStringRef stringObject = objectCreate(LCTypeString, stringData);
     return stringObject;
   }
   return NULL;
 }
 
 LCStringRef LCStringCreateFromHash(LCContextRef context, char hash[HASH_LENGTH]) {
-  return objectCreate(context, LCTypeString, hash);
+  return objectCreateFromContext(context, LCTypeString, hash);
 }
 
-LCStringRef LCStringCreateFromChars(LCContextRef context, char* characters, size_t length) {
+LCStringRef LCStringCreateFromChars(char* characters, size_t length) {
   char string[length+1];
   string[length] = '\0';
   memcpy(string, characters, length*sizeof(char));
-  return LCStringCreate(context, string);
+  return LCStringCreate(string);
 }
 
-LCStringRef LCStringCreateFromStrings(LCContextRef context, LCStringRef strings[], size_t count) {
+LCStringRef LCStringCreateFromStrings(LCStringRef strings[], size_t count) {
   size_t totalLength = 1;
   for (LCInteger i=0; i<count; i++) {
     totalLength = totalLength + LCStringLength(strings[i])-1;
@@ -44,15 +47,15 @@ LCStringRef LCStringCreateFromStrings(LCContextRef context, LCStringRef strings[
   for (LCInteger i=0; i<count; i++) {
     strcat(buffer, LCStringChars(strings[i]));
   }
-  return LCStringCreate(context, buffer);
+  return LCStringCreate(buffer);
 }
 
 char* LCStringChars(LCStringRef string) {
-  return objectGetData(string);
+  return objectData(string);
 }
 
 size_t LCStringLength(LCStringRef string) {
-  char* chars = objectGetData(string);
+  char* chars = objectData(string);
   return strlen(chars);
 }
 
@@ -60,9 +63,35 @@ bool LCStringEqual(LCStringRef string1, LCStringRef string2) {
   return stringCompare(string1, string2) == LCEqual;
 }
 
+bool LCStringEqualCString(LCStringRef string, char* cString) {
+  char* chars = objectData(string);
+  return strcmp(chars, cString) == 0;
+}
+
+LCArrayRef LCStringCreateTokens(LCStringRef string, char delimiter) {
+  char* cString = LCStringChars(string);
+  LCStringRef substrings[strlen(cString)/2];
+  LCInteger tokenStart = 0;
+  LCInteger substringCount = 0;
+  for (LCInteger i=0; i<strlen(cString); i++) {
+    if(cString[i] == delimiter) {
+      substrings[substringCount] = LCStringCreateFromChars(&cString[tokenStart], i-tokenStart);
+      substringCount = substringCount + 1;
+      tokenStart = i+1;
+    }
+  }
+  substrings[substringCount] = LCStringCreate(&cString[tokenStart]);
+  substringCount = substringCount + 1;
+  LCArrayRef array = LCArrayCreate(substrings, substringCount);
+  for(LCInteger i=0; i<substringCount; i++) {
+    objectRelease(substrings[i]);
+  }
+  return array;
+}
+
 LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
-  char* string1 = objectGetData(object1);
-  char* string2 = objectGetData(object2);
+  char* string1 = objectData(object1);
+  char* string2 = objectData(object2);
   LCInteger string1Length = strlen(string1);
   LCInteger string2Length = strlen(string2);
   LCInteger maxCompareLength = string1Length;
@@ -89,10 +118,13 @@ LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
 }
 
 void stringSerialize(LCStringRef object, FILE *fd) {
-  char* stringData = objectGetData(object);
+  char* stringData = objectData(object);
   fprintf(fd, "%s", stringData);
 }
 
-void stringDeserialize(LCStringRef object, FILE *fd) {
-  
+void* stringDeserialize(LCStringRef object, FILE *fd) {
+  LCDataRef data = readFromFile(fd);
+  LCStringRef string = LCStringCreate((char*)LCDataDataRef(data));
+  objectRelease(data);
+  return string;
 }

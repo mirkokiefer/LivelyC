@@ -6,6 +6,7 @@ struct LCObject {
   LCTypeRef type;
   LCInteger rCount;
   LCContextRef context;
+  bool persisted;
   char hash[HASH_LENGTH];
   void *data;
 };
@@ -20,29 +21,45 @@ struct LCContext {
   LCStoreRef store;
 };
 
-LCObjectRef objectCreate(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]) {
+LCObjectRef objectCreate(LCTypeRef type, void* data) {
   LCObjectRef object = malloc(sizeof(struct LCObject));
   if (object) {
     object->rCount = 1;
-    object->context = context;
     object->type = type;
-    object->data = NULL;
-    if (hash) {
-      strcpy(object->hash, hash);
-    }
+    object->data = data;
+    object->persisted = false;
   }
   return object;
 }
-void objectSetData(LCObjectRef object, void *data) {
-  object->data = data;
+
+LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]) {
+  LCObjectRef object = objectCreate(type, NULL);
+  object->persisted = true;
+  if (hash) {
+    strcpy(object->hash, hash);
+  }
+  return object;
 }
 
-void* objectGetData(LCObjectRef object) {
+void* objectData(LCObjectRef object) {
   return object->data;
 }
 
 LCTypeRef objectGetType(LCObjectRef object) {
   return object->type;
+}
+
+bool objectImmutable(LCObjectRef object) {
+  return objectGetType(object)->immutable;
+}
+
+bool objectsImmutable(LCObjectRef objects[], size_t length) {
+  for (LCInteger i=0; i<length; i++) {
+    if (objectImmutable(objects[i]) == false) {
+      return false;
+    }
+  }
+  return true;
 }
 
 LCObjectRef objectRetain(LCObjectRef object) {
@@ -87,6 +104,10 @@ LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2) {
 
 LCContextRef objectContext(LCObjectRef object) {
   return object->context;
+}
+
+void objectSerialize(LCObjectRef object, FILE* fd) {
+  object->type->serialize(object, fd);
 }
 
 int objectCompareFun(const void * elem1, const void * elem2) {

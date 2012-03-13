@@ -5,7 +5,7 @@
 int tests_run = 0;
 
 static char* test_retain_counting() {
-  LCStringRef test = LCStringCreate(NULL, "abc");
+  LCStringRef test = LCStringCreate("abc");
   mu_assert("initial retain count=1", objectRetainCount(test)==1);
   objectRetain(test);
   mu_assert("retain increases retain count", objectRetainCount(test)==2);
@@ -39,27 +39,27 @@ static char* test_string() {
   char* aCString = "abcd";
   char* anIdenticalCString = "abcd";
   char charArray[] = {'a', 'b', 'c', 'd'};
-  LCStringRef aLCString = LCStringCreate(NULL, aCString);
-  LCStringRef anIdenticalLCString = LCStringCreate(NULL, anIdenticalCString);
-  LCStringRef stringFromCharArray = LCStringCreateFromChars(NULL, charArray, 4);
+  LCStringRef aLCString = LCStringCreate(aCString);
+  LCStringRef anIdenticalLCString = LCStringCreate(anIdenticalCString);
+  LCStringRef stringFromCharArray = LCStringCreateFromChars(charArray, 4);
   
   mu_assert("LCStringEqual is correct", LCStringEqual(aLCString, anIdenticalLCString));
   mu_assert("LCStringCreateFromChars is correct", LCStringEqual(stringFromCharArray, aLCString));
   
-  LCStringRef bothStrings = LCStringCreate(NULL, "abcdabcd");
+  LCStringRef bothStrings = LCStringCreate("abcdabcd");
   LCStringRef stringArray[] = {aLCString, anIdenticalLCString};
-  LCStringRef mergedString = LCStringCreateFromStrings(NULL, stringArray, 2);
+  LCStringRef mergedString = LCStringCreateFromStrings(stringArray, 2);
   mu_assert("LCStringCreateFromStrings is correct", LCStringEqual(mergedString, bothStrings));
   
-  /*LCStringRef tokenString = LCStringCreate(NULL, "ab/cd/ef");
+  LCStringRef tokenString = LCStringCreate("ab/cd/ef");
   LCArrayRef tokenArray = LCStringCreateTokens(tokenString, '/');
   LCStringRef* tokens = (LCStringRef*)LCArrayObjects(tokenArray);
   mu_assert("LCStringCreateTokens is correct", LCStringEqualCString(tokens[0], "ab") &&
-            LCStringEqualCString(tokens[1], "cd") && LCStringEqualCString(tokens[2], "ef"));*/
+            LCStringEqualCString(tokens[1], "cd") && LCStringEqualCString(tokens[2], "ef"));
     
-  LCStringRef string1 = LCStringCreate(NULL, "abcd");
-  LCStringRef string2 = LCStringCreate(NULL, "abcde");
-  LCStringRef string3 = LCStringCreate(NULL, "abd");
+  LCStringRef string1 = LCStringCreate("abcd");
+  LCStringRef string2 = LCStringCreate("abcde");
+  LCStringRef string3 = LCStringCreate("abd");
   mu_assert("LCStringCompare", (objectCompare(string1, string2) == LCGreater) &&
             (objectCompare(string1, string3) == LCSmaller) &&
             (objectCompare(string1, string1) == LCEqual) &&
