@@ -64,8 +64,23 @@ void writeToFile(LCByte data[], size_t length, char* filePath) {
 
 size_t fileLength(FILE *fp) {
   struct stat stat;
-  fstat(fileno(fp), &stat);
-  return stat.st_size / sizeof(LCByte);
+  int err = fstat(fileno(fp), &stat);
+  if (err) {
+    size_t currentPos = ftell(fp);
+    if (currentPos == -1) {
+      return -1;
+    } else {
+      if (fseek(fp, 0, SEEK_END) == -1) {
+        return -1;
+      } else {
+        size_t endPos = ftell(fp);
+        fseek(fp, currentPos, SEEK_SET);
+        return endPos-currentPos;
+      }
+    }
+  } else {
+    return stat.st_size / sizeof(LCByte);
+  }
 }
 
 void readFromFile(FILE *fp, LCByte buffer[], size_t length) {
