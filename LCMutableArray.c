@@ -12,6 +12,7 @@ struct mutableArrayData {
   size_t bufferLength;
   LCObjectRef* objects;
 };
+
 struct LCType typeMutableArray = {
   .immutable = false,
   .dealloc = mutableArrayDealloc,
