@@ -12,7 +12,7 @@ void* dataDeserialize(LCDataRef data, FILE *fd);
 
 struct data {
   size_t length;
-  LCByte data[];
+  LCByte* data;
 };
 
 struct LCType typeData = {
@@ -23,16 +23,48 @@ struct LCType typeData = {
 
 LCTypeRef LCTypeData = &typeData;
 
-LCDataRef LCDataCreate(LCByte data[], size_t length) {
-  dataRef newData = malloc(sizeof(struct data) + length*sizeof(LCByte));
+static dataRef dataCreateStruct(size_t length) {
+  dataRef newData = malloc(sizeof(struct data));
   if (newData) {
     newData->length = length;
-    memcpy(newData->data, data, length*sizeof(LCByte));
+  }
+  return newData;
+}
+
+LCDataRef LCDataCreate(LCByte data[], size_t length) {
+  LCByte* dataBuffer = malloc(sizeof(LCByte)*length);
+  if (dataBuffer) {
+    memcpy(dataBuffer, data, length*sizeof(LCByte));
+    dataRef newData = dataCreateStruct(length);
+    newData->data = dataBuffer;
     return objectCreate(LCTypeData, newData);
   } else {
     return NULL;
   }
 };
+
+static LCByte* reallocBuffer(LCByte oldBuffer[], size_t length) {
+  LCByte* newBuffer = realloc(oldBuffer, sizeof(void*) * length);
+  return newBuffer;
+}
+
+LCDataRef LCDataCreateFromFile(FILE* fp, size_t length) {
+  if (length == -1) {
+    length = 10;
+  }
+  LCByte* buffer = reallocBuffer(NULL, length);
+  size_t dataRead = 0;
+  while (!feof(fp) && !ferror(fp)) {
+    if (dataRead == length) {
+      length = length * 2;
+      buffer = reallocBuffer(buffer, length);
+    }
+    dataRead = dataRead + fread(buffer, sizeof(LCByte), length-dataRead, fp);
+  }
+  dataRef data = dataCreateStruct(dataRead);
+  data->data = buffer;
+  return objectCreate(LCTypeData, data);
+}
 
 size_t LCDataLength(LCDataRef data) {
   dataRef dataStruct = objectData(data);
