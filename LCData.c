@@ -16,6 +16,7 @@ struct data {
 };
 
 struct LCType typeData = {
+  .immutable = true,
   .serialize = dataSerialize,
   .deserialize = dataDeserialize
 };
