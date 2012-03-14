@@ -55,6 +55,7 @@ void keyValueDealloc(LCObjectRef object) {
   keyValueDataRef keyValueData = objectData(object);
   objectRelease(keyValueData->key);
   objectRelease(keyValueData->value);
+  lcFree(objectData(object));
 }
 
 void keyValueSerialize(LCObjectRef keyValue, void* cookie, callback flush, FILE* fd) {

@@ -9,6 +9,7 @@ typedef struct data* dataRef;
 
 void dataSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
 void* dataDeserialize(LCDataRef data, FILE *fd);
+void dataDealloc(LCObjectRef data);
 
 struct data {
   size_t length;
@@ -17,6 +18,7 @@ struct data {
 
 struct LCType typeData = {
   .immutable = true,
+  .dealloc = dataDealloc,
   .serialize = dataSerialize,
   .deserialize = dataDeserialize
 };
@@ -74,6 +76,12 @@ size_t LCDataLength(LCDataRef data) {
 LCByte* LCDataDataRef(LCDataRef data) {
   dataRef dataStruct = objectData(data);
   return dataStruct->data;
+}
+
+void dataDealloc(LCObjectRef data) {
+  dataRef dataStruct = objectData(data);
+  lcFree(dataStruct->data);
+  lcFree(dataStruct);
 }
 
 void dataSerialize(LCObjectRef data, void* cookie, callback flush, FILE* fd) {

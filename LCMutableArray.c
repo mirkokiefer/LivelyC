@@ -121,6 +121,7 @@ void mutableArrayDealloc(LCMutableArrayRef object) {
     objectRelease(LCMutableArrayObjectAtIndex(object, i));
   }
   lcFree(arrayData->objects);
+  lcFree(arrayData);
 }
 
 bool resizeBuffer(mutableArrayDataRef array, size_t length) {

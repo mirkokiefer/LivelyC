@@ -164,6 +164,7 @@ LCMutableArrayRef LCMutableDictionaryCreateDeletedArray(LCMutableDictionaryRef o
 void mutableDictionaryDealloc(LCObjectRef object) {
   mutableDictDataRef dictData = objectData(object);
   objectRelease(dictData->keyValues);
+  lcFree(dictData);
 }
 
 void mutableDictionarySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp) {

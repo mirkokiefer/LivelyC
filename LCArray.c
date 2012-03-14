@@ -138,6 +138,7 @@ void arrayDealloc(LCObjectRef object) {
   for (LCInteger i=0; i<LCArrayLength(object); i++) {
     objectRelease(LCArrayObjectAtIndex(object, i));
   }
+  lcFree(objectData(object));
 }
 
 void arraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd) {
