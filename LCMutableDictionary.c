@@ -4,6 +4,7 @@
 typedef struct mutableDictData* mutableDictDataRef;
 
 void mutableDictionaryDealloc(LCObjectRef object);
+void mutableDictionarySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
 
 struct mutableDictData {
   LCMutableArrayRef keyValues;
@@ -11,7 +12,8 @@ struct mutableDictData {
 
 struct LCType typeMutableDictionary = {
   .immutable = false,
-  .dealloc = mutableDictionaryDealloc
+  .dealloc = mutableDictionaryDealloc,
+  .serialize = mutableDictionarySerialize
 };
 
 LCTypeRef LCTypeMutableDictionary = &typeMutableDictionary;
@@ -162,4 +164,9 @@ LCMutableArrayRef LCMutableDictionaryCreateDeletedArray(LCMutableDictionaryRef o
 void mutableDictionaryDealloc(LCObjectRef object) {
   mutableDictDataRef dictData = objectData(object);
   objectRelease(dictData->keyValues);
+}
+
+void mutableDictionarySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp) {
+  mutableDictDataRef data = objectData(object);
+  objectSerialize(data->keyValues, fp);
 }

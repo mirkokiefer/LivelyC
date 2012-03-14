@@ -131,11 +131,36 @@ static char* test_array() {
   return 0;
 }
 
+static char* test_dictionary() {
+  LCStringRef string1 = LCStringCreate("abc");
+  LCStringRef string2 = LCStringCreate("def");
+  LCStringRef string3 = LCStringCreate("ghi");
+  LCStringRef string1c = LCStringCreate("abc");
+  LCStringRef string2c = LCStringCreate("def");
+  LCKeyValueRef kv1 = LCKeyValueCreate(string1, string2);
+  LCKeyValueRef kv2 = LCKeyValueCreate(string2, string3);
+  LCKeyValueRef kv3 = LCKeyValueCreate(string3, string1);
+  LCKeyValueRef keyValues[] = {kv1, kv2, kv3};
+  LCMutableDictionaryRef dict = LCMutableDictionaryCreate(keyValues, 3);
+
+  mu_assert("LCMutableDictionaryCreate, LCMutableDictionaryValueForKey", (LCMutableDictionaryValueForKey(dict, string1c) == string2) &&
+            (LCMutableDictionaryValueForKey(dict, string2c) == string3) &&
+            (LCMutableDictionaryValueForKey(dict, string3) == string1));
+  
+  LCMutableDictionaryDeleteKey(dict, string2c);
+  mu_assert("LCMutableDictionaryDeleteKey", LCMutableDictionaryValueForKey(dict, string2c) == NULL);
+  
+  LCMutableDictionarySetValueForKey(dict, string1c, string1);
+  mu_assert("LCMutableDictionarySetValueForKey", LCMutableDictionaryValueForKey(dict, string1) == string1);
+  return 0;
+}
+
 static char* all_tests() {
   mu_run_test(test_retain_counting);
   mu_run_test(test_memory_stream);
   mu_run_test(test_string);
   mu_run_test(test_array);
+  mu_run_test(test_dictionary);
   return 0;
 }
 

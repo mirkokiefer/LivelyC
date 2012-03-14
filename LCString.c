@@ -119,7 +119,7 @@ LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
 
 void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp) {
   char* stringData = objectData(object);
-  fprintf(fp, "%s", stringData);
+  fprintf(fp, "\"%s\"", stringData);
 }
 
 void* stringDeserialize(LCStringRef object, FILE *fd) {
