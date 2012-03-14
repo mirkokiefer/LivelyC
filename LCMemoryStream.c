@@ -52,6 +52,4 @@ void memoryStreamDealloc(LCMemoryStreamRef object) {
   memoryStreamDataRef streamData = objectData(object);
   fclose(streamData->write);
   fclose(streamData->read);
-  free(streamData->write);
-  free(streamData->read);
 }

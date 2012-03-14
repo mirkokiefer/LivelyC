@@ -70,11 +70,21 @@ LCObjectRef objectRetain(LCObjectRef object) {
   return object;
 }
 
+static void objectDealloc(LCObjectRef object) {
+  if (object->data) {
+    if(object->type->dealloc) {
+      object->type->dealloc(object);
+    } else {
+      lcFree(object->data);
+    }
+  }
+  lcFree(object);
+}
+
 LCObjectRef objectRelease(LCObjectRef object) {
   object->rCount = object->rCount - 1;
   if (object->rCount == 0) {
-    lcFree(object->data);
-    lcFree(object);
+    objectDealloc(object);
     return NULL;
   }
   return object;
