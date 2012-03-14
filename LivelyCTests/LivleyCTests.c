@@ -155,12 +155,35 @@ static char* test_dictionary() {
   return 0;
 }
 
+static char* test_sha1() {
+  char* testData1 = "compute sha1";
+  char* realHash = "eefbec885d1042d22ea36fd1690d94dec9029680";
+  
+  char computedHash[HASH_LENGTH];
+  createSHAString((LCByte*)testData1, strlen(testData1), computedHash);
+  
+  mu_assert("SHA1 from testData1 is correct", strcmp(realHash, computedHash) == 0);
+  return 0;
+}
+
+static char* test_data() {
+  char* aCString = "normal string";
+  
+  LCDataRef aData = LCDataCreate((LCByte*)aCString, strlen(aCString)+1);
+  LCByte* dataFromLCData = LCDataDataRef(aData);
+  
+  mu_assert("LCData stores data correctly", strcmp(aCString, (char*)dataFromLCData)==0);
+  return 0;
+}
+
 static char* all_tests() {
   mu_run_test(test_retain_counting);
   mu_run_test(test_memory_stream);
   mu_run_test(test_string);
   mu_run_test(test_array);
   mu_run_test(test_dictionary);
+  mu_run_test(test_sha1);
+  mu_run_test(test_data);
   return 0;
 }
 

@@ -7,3 +7,4 @@
 #include "LCMutableArray.h"
 #include "LCKeyValue.h"
 #include "LCMutableDictionary.h"
+#include "LCSHA.h"

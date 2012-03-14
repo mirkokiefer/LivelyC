@@ -10,7 +10,7 @@ struct serializationCookie {
 
 typedef struct serializationCookie* serializationCookieRef;
 
-void LCCreateSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]) {
+void createSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]) {
   LCByte sha[LC_HASH_BYTE_LENGTH];
   computeSHA1(data, length, sha);
   createHexString(sha, LC_HASH_BYTE_LENGTH, buffer);
