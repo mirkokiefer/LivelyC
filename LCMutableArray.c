@@ -5,7 +5,7 @@ typedef struct mutableArrayData* mutableArrayDataRef;
 
 void mutableArrayDealloc(LCMutableArrayRef object);
 bool resizeBuffer(mutableArrayDataRef array, size_t size);
-void mutableArraySerialize(LCMutableArrayRef object, FILE* fd);
+void mutableArraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
 
 struct mutableArrayData {
   size_t length;
@@ -133,7 +133,7 @@ bool resizeBuffer(mutableArrayDataRef array, size_t length) {
   }
 }
 
-void mutableArraySerialize(LCMutableArrayRef array, FILE* fd) {
+void mutableArraySerialize(LCObjectRef array, void* cookie, callback flush, FILE* fd) {
   fprintf(fd, "{");
   for (LCInteger i=0; i<LCMutableArrayLength(array); i++) {
     objectSerialize(LCMutableArrayObjectAtIndex(array, i), fd);

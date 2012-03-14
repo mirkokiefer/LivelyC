@@ -7,7 +7,7 @@ typedef struct data* dataRef;
 
 #define READ_BUFFER_SIZE 1024
 
-void dataSerialize(LCDataRef data, FILE *fd);
+void dataSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
 void* dataDeserialize(LCDataRef data, FILE *fd);
 
 struct data {
@@ -43,7 +43,7 @@ LCByte* LCDataDataRef(LCDataRef data) {
   return dataStruct->data;
 }
 
-void dataSerialize(LCDataRef data, FILE *fd) {
+void dataSerialize(LCObjectRef data, void* cookie, callback flush, FILE* fd) {
   fwrite(LCDataDataRef(data), sizeof(LCByte), LCDataLength(data), fd);
 }
 

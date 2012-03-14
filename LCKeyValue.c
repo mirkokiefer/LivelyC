@@ -5,7 +5,7 @@ typedef struct keyValueData* keyValueDataRef;
 
 void keyValueDealloc(LCObjectRef object);
 LCCompare keyValueCompare(LCObjectRef object1, LCObjectRef object2);
-void keyValueSerialize(LCObjectRef object, FILE* fd);
+void keyValueSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
 
 struct keyValueData {
   LCObjectRef key;
@@ -53,7 +53,7 @@ void keyValueDealloc(LCObjectRef object) {
   objectRelease(keyValueData->value);
 }
 
-void keyValueSerialize(LCObjectRef keyValue, FILE* fd) {
+void keyValueSerialize(LCObjectRef keyValue, void* cookie, callback flush, FILE* fd) {
   objectSerialize(LCKeyValueKey(keyValue), fd);
   fprintf(fd, ": ");
   objectSerialize(LCKeyValueValue(keyValue), fd);

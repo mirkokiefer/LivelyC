@@ -3,8 +3,8 @@
 #include "LCUtils.h"
 
 LCCompare stringCompare(LCStringRef object1, LCStringRef object2);
-void stringSerialize(LCStringRef object, FILE *fd);
-void* stringDeserialize(LCStringRef object, FILE *fd);
+void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
+void* stringDeserialize(LCObjectRef object, FILE* fd);
 
 
 struct LCType stringType = {
@@ -117,9 +117,9 @@ LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
   }
 }
 
-void stringSerialize(LCStringRef object, FILE *fd) {
+void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp) {
   char* stringData = objectData(object);
-  fprintf(fd, "%s", stringData);
+  fprintf(fp, "%s", stringData);
 }
 
 void* stringDeserialize(LCStringRef object, FILE *fd) {

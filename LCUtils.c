@@ -34,13 +34,11 @@ LCByte hexDigitsToByte(char* hexDigits) {
   return hexDigits[0]*16 + hexDigits[1];
 }
 
-LCStringRef createHexString(LCByte data[], size_t length) {
-  char buffer[length*2+1];
+void createHexString(LCByte data[], size_t length, char buffer[]) {
   for(LCInteger i=0; i<length; i++) {
     byteToHexDigits(data[i], &buffer[i*2]);
   }
   buffer[length*2] = '\0';
-  return LCStringCreate(buffer);
 }
 
 LCDataRef createDataFromHexString(LCStringRef hexString) {

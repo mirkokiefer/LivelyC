@@ -25,6 +25,8 @@ typedef FILE*(*writeData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 typedef void(*deleteData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 typedef FILE*(*readData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 
+typedef void (*callback)(void *cookie);
+
 typedef enum {
   LCEqual,
   LCGreater,
@@ -35,7 +37,7 @@ struct LCType {
   bool immutable;
   void (*dealloc)(LCObjectRef object);
   LCCompare (*compare)(LCObjectRef object1, LCObjectRef object2);
-  void (*serialize)(LCObjectRef object, FILE *fd);
+  void (*serialize)(LCObjectRef object, void* cookie, callback flushFunct, FILE *fd);
   void* (*deserialize)(LCObjectRef object, FILE *fd);
   void *meta;
 };
@@ -53,6 +55,7 @@ LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
 void objectSerialize(LCObjectRef object, FILE* fd);
+char* objectHash(LCObjectRef object);
 
 void objectsSort(LCObjectRef objects[], size_t length);
 

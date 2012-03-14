@@ -16,7 +16,7 @@ char hexDigitToASCIChar(char hexDigit);
 char asciCharToHexDigit(char hexDigit);
 void byteToHexDigits(LCByte input, char* buffer);
 LCByte hexDigitsToByte(char *hexDigits);
-LCStringRef createHexString(LCByte data[], size_t length);
+void createHexString(LCByte data[], size_t length, char buffer[]);
 LCDataRef createDataFromHexString(LCStringRef hexString);
 LCArrayRef createPathArray(LCStringRef path);
 void writeToFile(LCByte data[], size_t length, char *filePath);

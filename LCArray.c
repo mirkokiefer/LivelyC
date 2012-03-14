@@ -3,7 +3,7 @@
 
 LCCompare arrayCompare(LCObjectRef object1, LCObjectRef object2);
 void arrayDealloc(LCObjectRef object);
-void arraySerialize(LCObjectRef object, FILE* fd);
+void arraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
 
 struct arrayData {
   size_t length;
@@ -140,7 +140,7 @@ void arrayDealloc(LCObjectRef object) {
   }
 }
 
-void arraySerialize(LCArrayRef object, FILE* fd) {
+void arraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd) {
   fprintf(fd, "{");
   for (LCInteger i=0; i<LCArrayLength(object); i++) {
     objectSerialize(LCArrayObjectAtIndex(object, i), fd);

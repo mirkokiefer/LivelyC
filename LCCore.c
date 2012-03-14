@@ -1,6 +1,9 @@
 
 
 #include "LCCore.h"
+#include "LCUtils.h"
+#include "LCMemoryStream.h"
+#include "LCSHA.h"
 
 struct LCObject {
   LCTypeRef type;
@@ -106,8 +109,23 @@ LCContextRef objectContext(LCObjectRef object) {
   return object->context;
 }
 
-void objectSerialize(LCObjectRef object, FILE* fd) {
-  object->type->serialize(object, fd);
+static void objectSerializeWithCallback(LCObjectRef object, void* cookie, callback flushFunct, FILE* fp) {
+  object->type->serialize(object, cookie, flushFunct, fp);
+}
+
+void objectSerialize(LCObjectRef object, FILE* fp) {
+  objectSerializeWithCallback(object, NULL, NULL, fp);
+}
+
+char* objectHash(LCObjectRef object) {
+  if ((object->hash[0] == '\0') || !object->type->immutable) {
+    LCMemoryStreamRef memoryStream = LCMemoryStreamCreate();
+    void* context = createHashContext(memoryStream);
+    objectSerializeWithCallback(object, context, updateHashContext, LCMemoryStreamWriteFile(memoryStream));
+    finalizeHashContext(context, object->hash);
+    objectRelease(memoryStream);
+  }
+  return object->hash;
 }
 
 int objectCompareFun(const void * elem1, const void * elem2) {

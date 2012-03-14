@@ -2,6 +2,8 @@
 #include "LivelyCTests.h"
 #include "minuit.h"
 
+void* arrayMap(LCInteger i, void* info, void* each);
+
 int tests_run = 0;
 
 static char* test_retain_counting() {
@@ -66,11 +68,74 @@ static char* test_string() {
   return 0;
 }
 
+void* arrayMap(LCInteger i, void* info, void* each) {
+  LCStringRef string = (LCStringRef)each;
+  return LCStringCreate(objectHash(string));
+}
+
+static char* test_array() {
+  LCStringRef string1 = LCStringCreate("abc");
+  LCStringRef string2 = LCStringCreate("def");
+  LCStringRef string3 = LCStringCreate("ghi");
+  LCStringRef stringArray[] = {string1, string2, string3};
+  LCArrayRef array = LCArrayCreate(stringArray, 3);
+  mu_assert("LCArray stores elements correctly",
+            (LCArrayObjectAtIndex(array, 0)==string1) && (LCArrayObjectAtIndex(array, 1)==string2));
+  
+  LCArrayRef subArray = LCArrayCreateSubArray(array, 1, -1);
+  LCArrayRef subArray1 = LCArrayCreateSubArray(array, 1, 2);
+  mu_assert("LCArrayCreateSubArray(array, start, -1) is correct",
+            (LCArrayObjectAtIndex(subArray, 0)==string2) && (LCArrayObjectAtIndex(subArray, 1)==string3));
+  mu_assert("LCArrayCreateSubArray is correct",
+            (LCArrayObjectAtIndex(subArray1, 0)==string2) && (LCArrayObjectAtIndex(subArray1, 1)==string3));
+  
+  LCMutableArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
+  mu_assert("LCMutableArrayCreate",
+            (LCMutableArrayObjectAtIndex(mArray, 0)==string1) &&
+            (LCMutableArrayObjectAtIndex(mArray, 1)==string2) &&
+            (LCMutableArrayObjectAtIndex(mArray, 2)==string3));
+  
+  LCStringRef string4 = LCStringCreate("jkl");
+  LCMutableArrayAddObject(mArray, string4);
+  mu_assert("LCMutableArrayAddObject", LCMutableArrayObjectAtIndex(mArray, 3) == string4);
+  
+  for (LCInteger i=0; i<50; i++) {
+    LCMutableArrayAddObject(mArray, string4);
+  }
+  mu_assert("LCMutableArrayAddObject 50 times", (LCMutableArrayObjectAtIndex(mArray, 50) == string4) &&
+            (LCMutableArrayObjectAtIndex(mArray, 1) == string2));
+  
+  LCMutableArrayRemoveIndex(mArray, 1);
+  mu_assert("LCMutableArrayRemoveIndex1", (LCMutableArrayObjectAtIndex(mArray, 0)==string1) &&
+            (LCMutableArrayObjectAtIndex(mArray, 1)==string3) &&
+            (LCMutableArrayObjectAtIndex(mArray, 2)==string4));
+  LCMutableArrayRemoveIndex(mArray, 0);
+  mu_assert("LCMutableArrayRemoveIndex2", LCMutableArrayObjectAtIndex(mArray, 0)==string3);
+  
+  LCMutableArrayRemoveObject(mArray, string3);
+  mu_assert("LCMutableArrayRemoveObject", LCMutableArrayObjectAtIndex(mArray, 0)==string4);
+
+  LCStringRef sortStrings[] = {string2, string3, string1};
+  LCMutableArrayRef sortArray = LCMutableArrayCreate(sortStrings, 3);
+  LCMutableArraySort(sortArray);
+  LCStringRef* sorted = LCMutableArrayObjects(sortArray);
+  mu_assert("LCMutableArraySort", (sorted[0] == string1) && (sorted[1] == string2) && (sorted[2] == string3));
+  
+  LCArrayRef arrays[] = {array, array};
+  LCArrayRef mergedArray = LCArrayCreateFromArrays(arrays, 2);
+  mu_assert("LCArrayCreateFromArrays", LCArrayLength(mergedArray)==2*LCArrayLength(array));
+  
+  LCArrayRef mappedArray = LCArrayCreateArrayWithMap(array, NULL, arrayMap);
+  mu_assert("LCArrayCreateArrayWithMap",
+            LCStringEqualCString(LCArrayObjectAtIndex(mappedArray, 0), objectHash(string1)));
+  return 0;
+}
+
 static char* all_tests() {
   mu_run_test(test_retain_counting);
   mu_run_test(test_memory_stream);
   mu_run_test(test_string);
-  
+  mu_run_test(test_array);
   return 0;
 }
 

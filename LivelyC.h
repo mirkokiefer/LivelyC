@@ -4,3 +4,4 @@
 #include "LCMemoryStream.h"
 #include "LCUtils.h"
 #include "LCArray.h"
+#include "LCMutableArray.h"
