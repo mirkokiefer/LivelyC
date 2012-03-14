@@ -2,6 +2,7 @@
 #include "LCCore.h"
 #include "LCString.h"
 #include "LCMemoryStream.h"
+#include "LCMemoryStreamLarge.h"
 #include "LCUtils.h"
 #include "LCArray.h"
 #include "LCMutableArray.h"
