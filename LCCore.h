@@ -55,6 +55,10 @@ LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
 void objectSerialize(LCObjectRef object, FILE* fd);
+void objectStore(LCObjectRef object, LCContextRef context);
+void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);
+void objectCache(LCObjectRef object);
+void objectDeleteCache(LCObjectRef object);
 char* objectHash(LCObjectRef object);
 
 void objectsSort(LCObjectRef objects[], size_t length);
