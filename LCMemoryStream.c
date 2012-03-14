@@ -41,7 +41,7 @@ FILE* LCMemoryStreamReadFile(LCMemoryStreamRef streamObj) {
 }
 
 size_t LCMemoryStreamLength(LCMemoryStreamRef streamObj) {
-  return fileLength(LCMemoryStreamWriteFile(streamObj));
+  return fileLength(LCMemoryStreamReadFile(streamObj));
 }
 
 void LCMemoryStreamData(LCMemoryStreamRef streamObj, LCByte buffer[], size_t length) {

@@ -8,7 +8,8 @@ typedef LCObjectRef LCMemoryStreamLargeRef;
 extern LCTypeRef LCTypeMemoryStreamLarge;
 
 LCMemoryStreamLargeRef LCMemoryStreamLargeCreate();
-FILE* LCMemoryStreamLargeFile(LCMemoryStreamLargeRef streamObj);
+FILE* LCMemoryStreamLargeWriteFile(LCMemoryStreamLargeRef streamObj);
+FILE* LCMemoryStreamLargeReadFile(LCMemoryStreamLargeRef streamObj);
 size_t LCMemoryStreamLargeLength(LCMemoryStreamLargeRef streamObj);
 char* LCMemoryStreamLargeData(LCMemoryStreamLargeRef streamObj);
 

@@ -38,16 +38,25 @@ LCMemoryStreamLargeRef LCMemoryStreamLargeCreate() {
   return NULL;
 }
 
-FILE* LCMemoryStreamLargeFile(LCMemoryStreamLargeRef streamObj) {
-  // on linux use fopencookie
+static struct cookie* memoryStreamLargeCreateCookie(LCMemoryStreamLargeRef stream, size_t position) {
   struct cookie *cookie = malloc(sizeof(struct cookie));
   if (cookie) {
-    cookie->stream = objectRetain(streamObj);
-    cookie->position = 0;
-    return funopen(cookie, memoryStreamLargeRead, memoryStreamLargeWrite, memoryStreamLargeSeek, memoryStreamLargeClose);
-  } else {
-    return NULL;
+    cookie->stream = objectRetain(stream);
+    cookie->position = position;
   }
+  return cookie;
+}
+
+FILE* LCMemoryStreamLargeWriteFile(LCMemoryStreamLargeRef streamObj) {
+  // on linux use fopencookie
+  memoryStreamLargeDataRef data = objectData(streamObj);
+  struct cookie *cookie = memoryStreamLargeCreateCookie(streamObj, data->dataWritten);
+  return funopen(cookie, memoryStreamLargeRead, memoryStreamLargeWrite, memoryStreamLargeSeek, memoryStreamLargeClose);
+}
+
+FILE* LCMemoryStreamLargeReadFile(LCMemoryStreamLargeRef streamObj) {
+  struct cookie *cookie = memoryStreamLargeCreateCookie(streamObj, 0);
+  return funopen(cookie, memoryStreamLargeRead, NULL, memoryStreamLargeSeek, memoryStreamLargeClose);
 }
 
 size_t LCMemoryStreamLargeLength(LCMemoryStreamLargeRef streamObj) {
@@ -106,8 +115,10 @@ fpos_t memoryStreamLargeSeek(void *cookie, fpos_t offset, int whence) {
       break;
     case SEEK_CUR:
       cookieStruct->position = cookieStruct->position + offset;
+      break;
     case SEEK_END:
       cookieStruct->position = streamData->dataWritten + offset;
+      break;
     default:
       break;
   }
