@@ -205,6 +205,17 @@ static char* test_data() {
   return 0;
 }
 
+static char* test_object_persistence() {
+  LCMemoryStoreRef store = LCMemoryStoreCreate();
+  LCContextRef context = contextCreate(LCMemoryStoreStoreObject(store));
+  char* string = "abcdef";
+  LCStringRef test = LCStringCreate(string);
+  objectStore(test, context);
+  objectDeleteCache(test);
+  mu_assert("object persistence", LCStringEqualCString(test, string));
+  return 0;
+}
+
 static char* all_tests() {
   mu_run_test(test_retain_counting);
   mu_run_test(test_memory_stream);
@@ -214,6 +225,7 @@ static char* all_tests() {
   mu_run_test(test_dictionary);
   mu_run_test(test_sha1);
   mu_run_test(test_data);
+  mu_run_test(test_object_persistence);
   return 0;
 }
 

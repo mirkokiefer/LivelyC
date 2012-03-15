@@ -15,6 +15,7 @@ struct LCObject {
 };
 
 struct LCStore {
+  void *cookie;
   writeData writefn;
   deleteData deletefn;
   readData readfn;
@@ -45,15 +46,18 @@ LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char h
 }
 
 void* objectData(LCObjectRef object) {
+  if (!object->data) {
+    objectCache(object);
+  }
   return object->data;
 }
 
-LCTypeRef objectGetType(LCObjectRef object) {
+LCTypeRef objectType(LCObjectRef object) {
   return object->type;
 }
 
 bool objectImmutable(LCObjectRef object) {
-  return objectGetType(object)->immutable;
+  return objectType(object)->immutable;
 }
 
 bool objectsImmutable(LCObjectRef objects[], size_t length) {
@@ -70,21 +74,22 @@ LCObjectRef objectRetain(LCObjectRef object) {
   return object;
 }
 
-static void objectDealloc(LCObjectRef object) {
+static void objectDataDealloc(LCObjectRef object) {
   if (object->data) {
     if(object->type->dealloc) {
       object->type->dealloc(object);
     } else {
       lcFree(object->data);
     }
+    object->data = NULL;
   }
-  lcFree(object);
 }
 
 LCObjectRef objectRelease(LCObjectRef object) {
   object->rCount = object->rCount - 1;
   if (object->rCount == 0) {
-    objectDealloc(object);
+    objectDataDealloc(object);
+    lcFree(object);
     return NULL;
   }
   return object;
@@ -127,6 +132,11 @@ void objectSerialize(LCObjectRef object, FILE* fp) {
   objectSerializeWithCallback(object, NULL, NULL, fp);
 }
 
+void objectDeserialize(LCObjectRef object, FILE* fd) {
+  void* data = object->type->deserialize(object, fd);
+  object->data = data;
+}
+
 char* objectHash(LCObjectRef object) {
   if ((object->hash[0] == '\0') || !object->type->immutable) {
     LCMemoryStreamRef memoryStream = LCMemoryStreamCreate();
@@ -136,6 +146,37 @@ char* objectHash(LCObjectRef object) {
     objectRelease(memoryStream);
   }
   return object->hash;
+}
+
+void objectStore(LCObjectRef object, LCContextRef context) {
+  FILE* fp = context->store->writefn(context->store->cookie, objectType(object), objectHash(object));
+  objectSerialize(object, fp);
+  object->persisted = true;
+  object->context = context;
+  fclose(fp);
+}
+
+void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context) {
+  for (LCInteger i=0; i<length; i++) {
+    objectStore(objects[i], context);
+  }
+}
+
+void objectCache(LCObjectRef object) {
+  if (!object->data) {
+    LCContextRef context = objectContext(object);
+    if (context) {
+      FILE* fp = context->store->readfn(context->store->cookie, objectType(object), objectHash(object));
+      objectDeserialize(object, fp);
+      fclose(fp);
+    }
+  }
+}
+
+void objectDeleteCache(LCObjectRef object) {
+  if (object->persisted) {
+    objectDataDealloc(object);
+  }
 }
 
 int objectCompareFun(const void * elem1, const void * elem2) {
@@ -158,6 +199,7 @@ void objectsSort(LCObjectRef objects[], size_t length) {
 LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, readData readfn) {
   LCStoreRef store = malloc(sizeof(struct LCStore));
   if (store) {
+    store->cookie = cookie;
     store->writefn = writefn;
     store->deletefn = deletefn;
     store->readfn = readfn;

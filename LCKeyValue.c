@@ -13,7 +13,7 @@ struct keyValueData {
 };
 
 struct LCType typeKeyValue = {
-  .immutable = true,
+  .immutable = false,
   .dealloc = keyValueDealloc,
   .compare = keyValueCompare,
   .serialize = keyValueSerialize
@@ -22,9 +22,6 @@ struct LCType typeKeyValue = {
 LCTypeRef LCTypeKeyValue = &typeKeyValue;
 
 LCKeyValueRef LCKeyValueCreate(LCObjectRef key, LCObjectRef value) {
-  if (!objectImmutable(key) || !objectImmutable(value)) {
-    perror(ErrorObjectImmutable);
-  }
   keyValueDataRef newKeyValue = malloc(sizeof(struct keyValueData));
   if (newKeyValue) {
     objectRetain(key);

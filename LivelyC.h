@@ -9,3 +9,5 @@
 #include "LCKeyValue.h"
 #include "LCMutableDictionary.h"
 #include "LCSHA.h"
+#include "LCMemoryStore.h"
+#include "LCFileStore.h"

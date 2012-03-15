@@ -122,12 +122,16 @@ void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp)
   fprintf(fp, "\"%s\"", stringData);
 }
 
-void* stringDeserialize(LCStringRef object, FILE *fd) {
-  size_t length = fileLength(fd);
-  char* string = malloc(length*sizeof(char));
-  if (string) {
-    readFromFile(fd, (LCByte*)string, length);
-    return objectCreate(LCTypeString, string);
+void* stringDeserialize(LCStringRef object, FILE *fp) {
+  LCDataRef data = LCDataCreateFromFile(fp, fileLength(fp));
+  char* serializedString = (char*)LCDataDataRef(data);
+  size_t stringLength = LCDataLength(data)-2;
+  char* buffer = malloc(sizeof(char)*(stringLength+1));
+  if (buffer) {
+    buffer[stringLength] = '\0';
+    memcpy(buffer, &serializedString[1], sizeof(char)*stringLength);
+    objectRelease(data);
+    return buffer;
   } else {
     return NULL;
   }

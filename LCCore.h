@@ -45,7 +45,7 @@ struct LCType {
 LCObjectRef objectCreate(LCTypeRef type, void* data);
 LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]);
 void* objectData(LCObjectRef object);
-LCTypeRef objectGetType(LCObjectRef object);
+LCTypeRef objectType(LCObjectRef object);
 bool objectImmutable(LCObjectRef object);
 bool objectsImmutable(LCObjectRef objects[], size_t length);
 LCObjectRef objectRetain(LCObjectRef object);
@@ -55,11 +55,12 @@ LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
 void objectSerialize(LCObjectRef object, FILE* fd);
+void objectDeserialize(LCObjectRef object, FILE* fd);
+char* objectHash(LCObjectRef object);
 void objectStore(LCObjectRef object, LCContextRef context);
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);
 void objectCache(LCObjectRef object);
 void objectDeleteCache(LCObjectRef object);
-char* objectHash(LCObjectRef object);
 
 void objectsSort(LCObjectRef objects[], size_t length);
 
