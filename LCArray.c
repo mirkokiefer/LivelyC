@@ -5,7 +5,8 @@ typedef struct arrayData* arrayDataRef;
 
 LCCompare arrayCompare(LCObjectRef object1, LCObjectRef object2);
 void arrayDealloc(LCObjectRef object);
-void arraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
+void arrayWalkChildren(LCObjectRef object, void *cookie, childCallback cb);
+void arrayStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 
 bool resizeBuffer(arrayDataRef array, size_t size);
 void mutableArraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
@@ -15,22 +16,37 @@ struct arrayData {
   size_t bufferLength;
   LCObjectRef* objects;
 };
+
 struct LCType typeArray = {
+  .name = "LCArray",
+  .serializationFormat = LCText,
   .immutable = true,
   .dealloc = arrayDealloc,
   .compare = arrayCompare,
-  .serialize = arraySerialize
+  .walkChildren = arrayWalkChildren,
+  .storeChildren = arrayStoreChildren
 };
 
 struct LCType typeMutableArray = {
+  .name = "LCMutableArray",
+  .serializationFormat = LCText,
   .immutable = false,
   .dealloc = arrayDealloc,
   .compare = arrayCompare,
-  .serialize = arraySerialize
+  .walkChildren = arrayWalkChildren,
+  .storeChildren = arrayStoreChildren
 };
 
 LCTypeRef LCTypeArray = &typeArray;
 LCTypeRef LCTypeMutableArray = &typeMutableArray;
+
+static void arraySetObjects(arrayDataRef data, LCObjectRef objects[], size_t length) {
+  for(LCInteger i=0; i<length; i++) {
+    objectRetain(objects[i]);
+  }
+  resizeBuffer(data, length);
+  memcpy(data->objects, objects, length * sizeof(void*));
+}
 
 LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
   if (!objectsImmutable(objects, length)) {
@@ -141,15 +157,14 @@ void arrayDealloc(LCObjectRef object) {
   lcFree(objectData(object));
 }
 
-void arraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd) {
-  fprintf(fd, "[");
-  for (LCInteger i=0; i<LCArrayLength(object); i++) {
-    objectSerialize(LCArrayObjectAtIndex(object, i), fd);
-    if (i< LCArrayLength(object) -1) {
-      fprintf(fd, ", ");
-    }
+void arrayWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
+  cb(cookie, "objects", LCArrayObjects(object), LCArrayLength(object), 0);
+}
+
+void arrayStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
+  if (strcmp(key, "objects")==0) {
+    arraySetObjects(objectData(object), objects, length);
   }
-  fprintf(fd, "]");
 }
 
 // LCMutableArray
@@ -159,11 +174,7 @@ LCMutableArrayRef LCMutableArrayCreate(LCObjectRef objects[], size_t length) {
   if (newArray) {
     newArray->objects = NULL;
     if(length > 0) {
-      for(LCInteger i=0; i<length; i++) {
-        objectRetain(objects[i]);
-      }
-      resizeBuffer(newArray, length);
-      memcpy(newArray->objects, objects, length * sizeof(void*));  
+      arraySetObjects(newArray, objects, length);
     } else {
       resizeBuffer(newArray, 10);
     }

@@ -8,10 +8,12 @@ void* stringDeserialize(LCObjectRef object, FILE* fd);
 
 
 struct LCType stringType = {
+  .name = "LCString",
   .immutable = true,
+  .serializationFormat = LCText,
   .compare = stringCompare,
-  .serialize = stringSerialize,
-  .deserialize = stringDeserialize
+  .serializeData = stringSerialize,
+  .deserializeData = stringDeserialize
 };
 
 LCTypeRef LCTypeString = &stringType;

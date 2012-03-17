@@ -3,7 +3,7 @@
 #define LivelyStore_imac_LCMutableDictionary_h
 
 #include "LCCore.h"
-#include "LCMutableArray.h"
+#include "LCArray.h"
 #include "LCKeyValue.h"
 
 typedef LCObjectRef LCMutableDictionaryRef;

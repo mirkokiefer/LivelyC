@@ -17,10 +17,12 @@ struct data {
 };
 
 struct LCType typeData = {
+  .name = "LCType",
   .immutable = true,
+  .serializationFormat = LCBinary,
   .dealloc = dataDealloc,
-  .serialize = dataSerialize,
-  .deserialize = dataDeserialize
+  .serializeData = dataSerialize,
+  .deserializeData = dataDeserialize
 };
 
 LCTypeRef LCTypeData = &typeData;

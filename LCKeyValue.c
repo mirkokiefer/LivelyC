@@ -5,7 +5,8 @@ typedef struct keyValueData* keyValueDataRef;
 
 void keyValueDealloc(LCObjectRef object);
 LCCompare keyValueCompare(LCObjectRef object1, LCObjectRef object2);
-void keyValueSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
+void keyValueWalkChildren(LCObjectRef object, void *cookie, childCallback cb);
+void keyValueStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 
 struct keyValueData {
   LCObjectRef key;
@@ -16,7 +17,8 @@ struct LCType typeKeyValue = {
   .immutable = false,
   .dealloc = keyValueDealloc,
   .compare = keyValueCompare,
-  .serialize = keyValueSerialize
+  .walkChildren = keyValueWalkChildren,
+  .storeChildren = keyValueStoreChildren
 };
 
 LCTypeRef LCTypeKeyValue = &typeKeyValue;
@@ -55,8 +57,20 @@ void keyValueDealloc(LCObjectRef object) {
   lcFree(objectData(object));
 }
 
-void keyValueSerialize(LCObjectRef keyValue, void* cookie, callback flush, FILE* fd) {
-  objectSerialize(LCKeyValueKey(keyValue), fd);
-  fprintf(fd, ": ");
-  objectSerialize(LCKeyValueValue(keyValue), fd);
+void keyValueWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
+  LCObjectRef key = LCKeyValueKey(object);
+  LCObjectRef value = LCKeyValueValue(object);
+  cb(cookie, "key", &key, 1, 0);
+  cb(cookie, "value", &value, 1, 0);
+}
+
+void keyValueStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
+  keyValueDataRef data = objectData(object);
+  if (strcmp(key, "key")) {
+    data->key = objectRetain(*objects);
+    return;
+  } else
+  if (strcmp(key, "value")) {
+    data->value = objectRetain(*objects);
+  }
 }

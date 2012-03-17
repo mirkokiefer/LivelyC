@@ -4,7 +4,8 @@
 typedef struct mutableDictData* mutableDictDataRef;
 
 void mutableDictionaryDealloc(LCObjectRef object);
-void mutableDictionarySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
+void mutableDictionaryWalkChildren(LCObjectRef object, void *cookie, childCallback cb);
+void mutableDictionaryStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 
 struct mutableDictData {
   LCMutableArrayRef keyValues;
@@ -13,7 +14,8 @@ struct mutableDictData {
 struct LCType typeMutableDictionary = {
   .immutable = false,
   .dealloc = mutableDictionaryDealloc,
-  .serialize = mutableDictionarySerialize
+  .walkChildren = mutableDictionaryWalkChildren,
+  .storeChildren = mutableDictionaryStoreChildren
 };
 
 LCTypeRef LCTypeMutableDictionary = &typeMutableDictionary;
@@ -167,7 +169,13 @@ void mutableDictionaryDealloc(LCObjectRef object) {
   lcFree(dictData);
 }
 
-void mutableDictionarySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp) {
-  mutableDictDataRef data = objectData(object);
-  objectSerialize(data->keyValues, fp);
+void mutableDictionaryWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
+  cb(cookie, "entries", LCMutableDictionaryEntries(object), LCMutableDictionaryLength(object), 0);
+}
+
+void mutableDictionaryStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
+  if (strcmp(key, "entries")==0) {
+    mutableDictDataRef data = objectData(object);
+    data->keyValues = LCMutableArrayCreate(objects, length);
+  }
 }

@@ -25,6 +25,11 @@ struct LCContext {
   LCStoreRef store;
 };
 
+struct LCSerializationCookie {
+  FILE *fp;
+  bool first;
+};
+
 LCObjectRef objectCreate(LCTypeRef type, void* data) {
   LCObjectRef object = malloc(sizeof(struct LCObject));
   if (object) {
@@ -32,9 +37,12 @@ LCObjectRef objectCreate(LCTypeRef type, void* data) {
     object->type = type;
     object->data = data;
     object->persisted = false;
+    object->hash[0] = '\0';
   }
   return object;
 }
+
+char *LCUnnamedObject = "LCUnnamedObject";
 
 LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCObjectRef object = objectCreate(type, NULL);
@@ -124,17 +132,53 @@ LCContextRef objectContext(LCObjectRef object) {
   return object->context;
 }
 
-static void objectSerializeWithCallback(LCObjectRef object, void* cookie, callback flushFunct, FILE* fp) {
-  object->type->serialize(object, cookie, flushFunct, fp);
+static void objectSerializeDataWithCallback(LCObjectRef object, void *cookie, callback flushFunct, FILE *fp) {
+  object->type->serializeData(object, cookie, flushFunct, fp);
 }
 
-void objectSerialize(LCObjectRef object, FILE* fp) {
+static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
+  struct LCSerializationCookie *info = (struct LCSerializationCookie*)cookie;
+  if (info->first) {
+    info->first = false;
+  } else {
+    fprintf(info->fp, ",\n");
+  }
+  fprintf(info->fp, "%s: [", key);
+  for (LCInteger i=0; i<length; i++) {
+    if (i>0) {
+      fprintf(info->fp, ",");
+    }
+    fprintf(info->fp, "\{\"type\": \"%s\", \"hash\": \"%s\"}", typeName(objectType(objects[i])), objectHash(objects[i]));
+  }
+  fprintf(info->fp, "]");
+}
+
+static void objectSerializeWithCallback(LCObjectRef object, void* cookie, callback cb, FILE *fp) {
+  if (object->type->serializeData) {
+    objectSerializeDataWithCallback(object, NULL, cb, fp);
+  } else {
+    struct LCSerializationCookie cookie = {
+      .fp = fp,
+      .first = true
+    };
+    fprintf(fp, "{");
+    object->type->walkChildren(object, &cookie, serializeChildCallback);
+    fprintf(fp, "}");
+  }
+}
+
+void objectSerialize(LCObjectRef object, FILE *fp) {
   objectSerializeWithCallback(object, NULL, NULL, fp);
 }
 
 void objectDeserialize(LCObjectRef object, FILE* fd) {
-  void* data = object->type->deserialize(object, fd);
-  object->data = data;
+  if (object->type->serializeData) {
+    void* data = object->type->deserializeData(object, fd);
+    object->data = data;
+  } else {
+    perror("deserialization of objects with children not implemented");
+    // TODO
+  }
 }
 
 char* objectHash(LCObjectRef object) {
@@ -194,6 +238,22 @@ int objectCompareFun(const void * elem1, const void * elem2) {
 
 void objectsSort(LCObjectRef objects[], size_t length) {
   qsort(objects, length, sizeof(void*), objectCompareFun);
+}
+
+char* typeName(LCTypeRef type) {
+  if (type->name) {
+    return type->name;
+  } else {
+    return LCUnnamedObject;
+  }
+}
+
+bool typeImmutable(LCTypeRef type) {
+  return type->immutable;
+}
+
+LCFormat typeSerializationFormat(LCTypeRef type) {
+  return type->serializationFormat;
 }
 
 LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, readData readfn) {
