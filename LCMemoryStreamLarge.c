@@ -32,6 +32,7 @@ LCMemoryStreamLargeRef LCMemoryStreamLargeCreate() {
   memoryStreamLargeDataRef stream = malloc(sizeof(struct memoryStreamLargeData));
   if (stream) {
     stream->dataWritten = 0;
+    stream->buffer = NULL;
     memoryStreamLargeResizeBuffer(stream, 10);
     return objectCreate(LCTypeMemoryStreamLarge, stream);
   }
