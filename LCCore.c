@@ -136,6 +136,7 @@ static void objectSerializeDataWithCallback(LCObjectRef object, void *cookie, ca
   object->type->serializeData(object, cookie, flushFunct, fp);
 }
 
+// todo: depth parameter not considered - should serialize children as composite objects accordingly
 static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
   struct LCSerializationCookie *info = (struct LCSerializationCookie*)cookie;
   if (info->first) {

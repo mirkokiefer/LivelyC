@@ -14,6 +14,7 @@ struct keyValueData {
 };
 
 struct LCType typeKeyValue = {
+  .name = "LCKeyValue",
   .immutable = false,
   .dealloc = keyValueDealloc,
   .compare = keyValueCompare,

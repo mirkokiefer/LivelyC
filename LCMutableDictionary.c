@@ -12,6 +12,7 @@ struct mutableDictData {
 };
 
 struct LCType typeMutableDictionary = {
+  .name = "LCMutableDictionary",
   .immutable = false,
   .dealloc = mutableDictionaryDealloc,
   .walkChildren = mutableDictionaryWalkChildren,
