@@ -187,7 +187,6 @@ static void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objec
   object->type->storeChildren(object, key, objects, length);
 }
 
-
 static void deserializeJson(LCObjectRef object, json_value *json) {
   for (LCInteger i=0; i<json->u.object.length; i++) {
     char *key = json->u.object.values[i].name;
