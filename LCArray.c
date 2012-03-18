@@ -53,7 +53,15 @@ LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
     perror(ErrorObjectImmutable);
     return NULL;
   }
-  return LCMutableArrayCreate(objects, length);
+  arrayDataRef newArray = malloc(sizeof(struct arrayData));
+  if (newArray) {
+    newArray->objects = NULL;
+    arraySetObjects(newArray, objects, length);
+    newArray->length = length;
+    return objectCreate(LCTypeArray, newArray);
+  } else {
+    return NULL;
+  }
 };
 
 LCArrayRef LCArrayCreateAppendingObject(LCArrayRef array, LCObjectRef object) {
