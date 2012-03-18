@@ -28,6 +28,7 @@ struct LCContext {
 
 struct LCSerializationCookie {
   FILE *fp;
+  LCObjectRef object;
   bool first;
 };
 
@@ -38,6 +39,7 @@ LCObjectRef objectCreate(LCTypeRef type, void* data) {
     object->type = type;
     object->data = data;
     object->persisted = false;
+    object->context = NULL;
     object->hash[0] = '\0';
   }
   return object;
@@ -48,6 +50,7 @@ char *LCUnnamedObject = "LCUnnamedObject";
 LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCObjectRef object = objectCreate(type, NULL);
   object->persisted = true;
+  object->context = context;
   if (hash) {
     strcpy(object->hash, hash);
   }
@@ -133,6 +136,12 @@ LCContextRef objectContext(LCObjectRef object) {
   return object->context;
 }
 
+static void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback) {
+  if (object->type->walkChildren) {
+    object->type->walkChildren(object, cookie, callback);
+  }
+}
+
 static void objectSerializeDataWithCallback(LCObjectRef object, void *cookie, callback flushFunct, FILE *fp) {
   object->type->serializeData(object, cookie, flushFunct, fp);
 }
@@ -161,10 +170,11 @@ static void objectSerializeWithCallback(LCObjectRef object, void* cookie, callba
   } else {
     struct LCSerializationCookie cookie = {
       .fp = fp,
+      .object = object,
       .first = true
     };
     fprintf(fp, "{");
-    object->type->walkChildren(object, &cookie, serializeChildCallback);
+    objectWalkChildren(object, &cookie, serializeChildCallback);
     fprintf(fp, "}");
   }
 }
@@ -173,27 +183,38 @@ void objectSerialize(LCObjectRef object, FILE *fp) {
   objectSerializeWithCallback(object, NULL, NULL, fp);
 }
 
+static void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
+  object->type->storeChildren(object, key, objects, length);
+}
+
+
 static void deserializeJson(LCObjectRef object, json_value *json) {
   for (LCInteger i=0; i<json->u.object.length; i++) {
     char *key = json->u.object.values[i].name;
     json_value *value = json->u.object.values[i].value;
-    json_value **objects = value->u.array.values;
-    for (LCInteger j=0; j<value->u.array.length; j++) {
-      json_value *object = objects[j];
+    json_value **objectsInfo = value->u.array.values;
+    
+    size_t objectsLength = value->u.array.length;
+    LCObjectRef objects[objectsLength];
+    
+    for (LCInteger j=0; j<objectsLength; j++) {
+      json_value *objectInfo = objectsInfo[j];
       char *typeString;
       char *hash;
-      for (LCInteger k=0; k<object->u.object.length; k++) {
-        char* objectInfoKey = object->u.object.values[k].name;
-        json_value *objectInfoValue = object->u.object.values[k].value;
-        if (strcmp(objectInfoKey, "type")) {
+      for (LCInteger k=0; k<objectInfo->u.object.length; k++) {
+        char* objectInfoKey = objectInfo->u.object.values[k].name;
+        json_value *objectInfoValue = objectInfo->u.object.values[k].value;
+        if (strcmp(objectInfoKey, "type")==0) {
           typeString = objectInfoValue->u.string.ptr;
         } else
-          if (strcmp(objectInfoKey, "hash")) {
+          if (strcmp(objectInfoKey, "hash")==0) {
             hash = objectInfoValue->u.string.ptr;
           }
       }
-      printf("\n%s - %s - %s\n", key, typeString, hash);
+      LCContextRef context = objectContext(object);
+      objects[j] = objectCreateFromContext(context, contextStringToType(context, typeString), hash);
     }
+    objectStoreChildren(object, key, objects, objectsLength);
   }
 }
 
@@ -202,9 +223,9 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
     void* data = object->type->deserializeData(object, fd);
     object->data = data;
   } else {
+    object->data = object->type->initData();
     LCDataRef data = LCDataCreateFromFile(fd, fileLength(fd));
     char *jsonString = (char*)LCDataDataRef(data);
-    printf("%s", jsonString);
     json_value *json = json_parse(jsonString);
     deserializeJson(object, json);
   }
@@ -221,12 +242,22 @@ char* objectHash(LCObjectRef object) {
   return object->hash;
 }
 
+static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
+  LCObjectRef parent = (LCObjectRef)cookie;
+  for (LCInteger i=0; i<length; i++) {
+    objectStore(objects[i], objectContext(parent));
+  }
+}
+
 void objectStore(LCObjectRef object, LCContextRef context) {
-  FILE* fp = context->store->writefn(context->store->cookie, objectType(object), objectHash(object));
-  objectSerialize(object, fp);
-  object->persisted = true;
-  object->context = context;
-  fclose(fp);
+  if (!object->persisted) {
+    FILE* fp = context->store->writefn(context->store->cookie, objectType(object), objectHash(object));
+    object->context = context;
+    objectSerialize(object, fp);
+    objectWalkChildren(object, object, storeChildCallback);
+    object->persisted = true;
+    fclose(fp);
+  }
 }
 
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context) {
@@ -297,21 +328,23 @@ LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, rea
 }
 
 LCContextRef contextCreate(LCStoreRef store, stringToType funs[], size_t length) {
-  LCContextRef context = malloc(sizeof(struct LCContext) + sizeof(stringToType)*length);
+  if (!funs) {
+    stringToType coreFun = &coreStringToType;
+    funs = &coreFun;
+    length = 1;
+  }
+  LCContextRef context = malloc(sizeof(struct LCContext) + length * sizeof(stringToType));
   if (context) {
     context->store = store;
-    if (!funs) {
-      stringToType coreFun = coreStringToType;
-      funs = &coreFun;
-      length = 1;
-    }
     context->translationFunsLength = length;
-    memcpy(context->translationFuns, funs, length * sizeof(stringToType));
+    for (LCInteger i=0; i<length; i++) {
+      context->translationFuns[i] = funs[i];
+    }
   }
   return context;
 }
 
-LCTypeRef contextStringToType(LCContextRef context, char* typeString) {
+LCTypeRef contextStringToType(LCContextRef context, char *typeString) {
   for (LCInteger i=0; i<context->translationFunsLength; i++) {
     LCTypeRef type = context->translationFuns[i](typeString);
     if (type) {

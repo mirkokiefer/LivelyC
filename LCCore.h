@@ -50,6 +50,7 @@ struct LCType {
   LCCompare (*compare)(LCObjectRef object1, LCObjectRef object2);
   void (*serializeData)(LCObjectRef object, void *cookie, callback flushFunct, FILE *fd);
   void* (*deserializeData)(LCObjectRef object, FILE *fd);
+  void* (*initData)();
   void (*walkChildren)(LCObjectRef object, void *cookie, childCallback cb);
   void (*storeChildren)(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
   void *meta;

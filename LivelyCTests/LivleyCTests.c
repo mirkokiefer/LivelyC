@@ -217,6 +217,17 @@ static char* test_object_persistence() {
   objectStore(test, context);
   objectDeleteCache(test);
   mu_assert("object persistence", LCStringEqualCString(test, string));
+  
+  LCStringRef string1 = LCStringCreate("abc");
+  LCStringRef string2 = LCStringCreate("def");
+  LCStringRef string3 = LCStringCreate("ghi");
+  LCStringRef stringArray[] = {string1, string2, string3};
+  LCArrayRef array = LCArrayCreate(stringArray, 3);
+  objectStore(array, context);
+  objectDeleteCache(array);
+  objectCache(array);
+  LCStringRef *strings = LCArrayObjects(array);
+  mu_assert("array persistence", LCStringEqual(string1, strings[0]));
   return 0;
 }
 
@@ -242,6 +253,6 @@ bool testsRun() {
     printf("ALL TESTS PASSED\n");
   }
   printf("Tests run: %d\n", tests_run);
-    
+  
   return result == 0;
 }

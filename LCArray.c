@@ -7,6 +7,7 @@ LCCompare arrayCompare(LCObjectRef object1, LCObjectRef object2);
 void arrayDealloc(LCObjectRef object);
 void arrayWalkChildren(LCObjectRef object, void *cookie, childCallback cb);
 void arrayStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
+void* arrayInitData();
 
 bool resizeBuffer(arrayDataRef array, size_t size);
 void mutableArraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
@@ -23,6 +24,7 @@ struct LCType typeArray = {
   .immutable = true,
   .dealloc = arrayDealloc,
   .compare = arrayCompare,
+  .initData = arrayInitData,
   .walkChildren = arrayWalkChildren,
   .storeChildren = arrayStoreChildren
 };
@@ -33,6 +35,7 @@ struct LCType typeMutableArray = {
   .immutable = false,
   .dealloc = arrayDealloc,
   .compare = arrayCompare,
+  .initData = arrayInitData,
   .walkChildren = arrayWalkChildren,
   .storeChildren = arrayStoreChildren
 };
@@ -40,12 +43,21 @@ struct LCType typeMutableArray = {
 LCTypeRef LCTypeArray = &typeArray;
 LCTypeRef LCTypeMutableArray = &typeMutableArray;
 
+void* arrayInitData() {
+  arrayDataRef newArray = malloc(sizeof(struct arrayData));
+  if (newArray) {
+    newArray->length = 0;
+    newArray->objects = NULL;
+  }
+  return newArray;
+}
+
 static void arraySetObjects(arrayDataRef data, LCObjectRef objects[], size_t length) {
   for(LCInteger i=0; i<length; i++) {
     objectRetain(objects[i]);
   }
   resizeBuffer(data, length);
-  memcpy(data->objects, objects, length * sizeof(void*));
+  memcpy(data->objects, objects, length * sizeof(LCObjectRef));
 }
 
 LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
@@ -53,15 +65,11 @@ LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
     perror(ErrorObjectImmutable);
     return NULL;
   }
-  arrayDataRef newArray = malloc(sizeof(struct arrayData));
-  if (newArray) {
-    newArray->objects = NULL;
-    arraySetObjects(newArray, objects, length);
-    newArray->length = length;
-    return objectCreate(LCTypeArray, newArray);
-  } else {
-    return NULL;
-  }
+  arrayDataRef newArray = arrayInitData();
+  newArray->objects = NULL;
+  arraySetObjects(newArray, objects, length);
+  newArray->length = length;
+  return objectCreate(LCTypeArray, newArray);
 };
 
 LCArrayRef LCArrayCreateAppendingObject(LCArrayRef array, LCObjectRef object) {
