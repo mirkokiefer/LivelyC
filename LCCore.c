@@ -2,8 +2,7 @@
 
 #include "LCCore.h"
 #include "LCUtils.h"
-#include "LCPipe.h"
-#include "LCSHA.h"
+#include "LivelyC.h"
 
 struct LCObject {
   LCTypeRef type;
@@ -23,6 +22,8 @@ struct LCStore {
 
 struct LCContext {
   LCStoreRef store;
+  size_t translationFunsLength;
+  stringToType translationFuns[];
 };
 
 struct LCSerializationCookie {
@@ -172,18 +173,45 @@ void objectSerialize(LCObjectRef object, FILE *fp) {
   objectSerializeWithCallback(object, NULL, NULL, fp);
 }
 
+static void deserializeJson(LCObjectRef object, json_value *json) {
+  for (LCInteger i=0; i<json->u.object.length; i++) {
+    char *key = json->u.object.values[i].name;
+    json_value *value = json->u.object.values[i].value;
+    json_value **objects = value->u.array.values;
+    for (LCInteger j=0; j<value->u.array.length; j++) {
+      json_value *object = objects[j];
+      char *typeString;
+      char *hash;
+      for (LCInteger k=0; k<object->u.object.length; k++) {
+        char* objectInfoKey = object->u.object.values[k].name;
+        json_value *objectInfoValue = object->u.object.values[k].value;
+        if (strcmp(objectInfoKey, "type")) {
+          typeString = objectInfoValue->u.string.ptr;
+        } else
+          if (strcmp(objectInfoKey, "hash")) {
+            hash = objectInfoValue->u.string.ptr;
+          }
+      }
+      printf("\n%s - %s - %s\n", key, typeString, hash);
+    }
+  }
+}
+
 void objectDeserialize(LCObjectRef object, FILE* fd) {
   if (object->type->serializeData) {
     void* data = object->type->deserializeData(object, fd);
     object->data = data;
   } else {
-    perror("deserialization of objects with children not implemented");
-    // TODO
+    LCDataRef data = LCDataCreateFromFile(fd, fileLength(fd));
+    char *jsonString = (char*)LCDataDataRef(data);
+    printf("%s", jsonString);
+    json_value *json = json_parse(jsonString);
+    deserializeJson(object, json);
   }
 }
 
 char* objectHash(LCObjectRef object) {
-  if ((object->hash[0] == '\0') || !object->type->immutable) {
+  if ((object->hash[0] == '\0') || (!object->type->immutable && !object->persisted)) {
     LCPipeRef memoryStream = LCPipeCreate();
     void* context = createHashContext(memoryStream);
     objectSerializeWithCallback(object, context, updateHashContext, LCPipeWriteFile(memoryStream));
@@ -268,12 +296,39 @@ LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, rea
   return store;
 }
 
-LCContextRef contextCreate(LCStoreRef store) {
-  LCContextRef context = malloc(sizeof(struct LCContext));
+LCContextRef contextCreate(LCStoreRef store, stringToType funs[], size_t length) {
+  LCContextRef context = malloc(sizeof(struct LCContext) + sizeof(stringToType)*length);
   if (context) {
     context->store = store;
+    if (!funs) {
+      stringToType coreFun = coreStringToType;
+      funs = &coreFun;
+      length = 1;
+    }
+    context->translationFunsLength = length;
+    memcpy(context->translationFuns, funs, length * sizeof(stringToType));
   }
   return context;
+}
+
+LCTypeRef contextStringToType(LCContextRef context, char* typeString) {
+  for (LCInteger i=0; i<context->translationFunsLength; i++) {
+    LCTypeRef type = context->translationFuns[i](typeString);
+    if (type) {
+      return type;
+    }
+  }
+  return NULL;
+}
+
+LCTypeRef coreStringToType(char *typeString) {
+  LCTypeRef coreTypes[] = {LCTypeArray, LCTypeData, LCTypeKeyValue, LCTypeMutableArray, LCTypeMutableDictionary, LCTypeString};
+  for (LCInteger i=0; i<6; i++) {
+    if (strcmp(typeString, typeName(coreTypes[i]))==0) {
+      return coreTypes[i]; 
+    }
+  }
+  return NULL;
 }
 
 void lcFree(void* object) {

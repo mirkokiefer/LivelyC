@@ -8,3 +8,4 @@
 #include <openssl/sha.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include "json.h"

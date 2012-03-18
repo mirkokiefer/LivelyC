@@ -31,6 +31,8 @@ typedef struct LCType* LCTypeRef;
 typedef struct LCStore*  LCStoreRef;
 typedef struct LCContext* LCContextRef;
 
+typedef LCTypeRef(*stringToType)(char *typeString);
+
 typedef void*(*LCCreateEachCb)(LCInteger i, void* info, void* each);
 
 typedef FILE*(*writeData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
@@ -79,7 +81,10 @@ bool typeImmutable(LCTypeRef type);
 LCFormat typeSerializationFormat(LCTypeRef type);
 
 LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, readData readfn);
-LCContextRef contextCreate(LCStoreRef store);
+LCContextRef contextCreate(LCStoreRef store, stringToType translateFuns[], size_t length);
+LCTypeRef contextStringToType(LCContextRef context, char* typeString);
+
+LCTypeRef coreStringToType(char* typeString);
 
 void lcFree(void* object);
 

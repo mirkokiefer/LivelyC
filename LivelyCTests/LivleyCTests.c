@@ -208,7 +208,10 @@ static char* test_data() {
 
 static char* test_object_persistence() {
   LCMemoryStoreRef store = LCMemoryStoreCreate();
-  LCContextRef context = contextCreate(LCMemoryStoreStoreObject(store));
+  LCContextRef context = contextCreate(LCMemoryStoreStoreObject(store), NULL, 0);
+  
+  mu_assert("contextStringToType", contextStringToType(context, "LCString") == LCTypeString);
+  
   char* string = "abcdef";
   LCStringRef test = LCStringCreate(string);
   objectStore(test, context);
