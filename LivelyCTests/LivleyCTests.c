@@ -34,19 +34,19 @@ static char* test_memory_stream() {
 }
 
 static char* test_memory_stream_large() {
-  LCMemoryStreamLargeRef stream = LCMemoryStreamLargeCreate();
-  FILE* fd = LCMemoryStreamLargeWriteFile(stream);
+  LCMemoryStreamRef stream = LCMemoryStreamCreate();
+  FILE* fd = LCMemoryStreamWriteFile(stream);
   fprintf(fd, "123");
   fprintf(fd, "456789");
   fflush(fd);
   
-  FILE* fpr = LCMemoryStreamLargeReadFile(stream);
+  FILE* fpr = LCMemoryStreamReadFile(stream);
   size_t length = fileLength(fpr);
   char buffer[length+1];
   buffer[length] = '\0';
-  readFromFile(LCMemoryStreamLargeReadFile(stream), (LCByte*)buffer, length);
+  readFromFile(LCMemoryStreamReadFile(stream), (LCByte*)buffer, length);
   
-  mu_assert("LCMemoryStreamLarge read/write", strcmp("123456789", buffer)==0);
+  mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
   return 0;
 }
 
@@ -192,13 +192,13 @@ static char* test_data() {
   
   mu_assert("LCData stores data correctly", strcmp(aCString, (char*)dataFromLCData)==0);
   
-  LCMemoryStreamLargeRef stream = LCMemoryStreamLargeCreate();
-  FILE *fpw = LCMemoryStreamLargeWriteFile(stream);
+  LCMemoryStreamRef stream = LCMemoryStreamCreate();
+  FILE *fpw = LCMemoryStreamWriteFile(stream);
   char* writeString = "123456";
   fprintf(fpw, "%s", writeString);
   fclose(fpw);
   
-  FILE *fpr = LCMemoryStreamLargeReadFile(stream);
+  FILE *fpr = LCMemoryStreamReadFile(stream);
   LCDataRef dataFromFile = LCDataCreateFromFile(fpr, -1);
   char *data = (char*)LCDataDataRef(dataFromFile);
   mu_assert("LCDataCreateFromFile", memcmp(writeString, data, strlen(writeString))==0);

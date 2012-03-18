@@ -28,12 +28,12 @@ LCStoreRef LCMemoryStoreStoreObject(LCMemoryStoreRef store) {
 }
 
 FILE* memoryStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
-  LCMemoryStreamLargeRef stream = LCMemoryStreamLargeCreate();
+  LCMemoryStreamRef stream = LCMemoryStreamCreate();
   LCStringRef hashObj = LCStringCreate(hash);
   LCMutableDictionarySetValueForKey(memoryStoreData(cookie), hashObj, stream);
   objectRelease(stream);
   objectRelease(hashObj);
-  return LCMemoryStreamLargeWriteFile(stream);
+  return LCMemoryStreamWriteFile(stream);
 }
 
 void memoryStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
@@ -44,10 +44,10 @@ void memoryStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
 
 FILE* memoryStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCStringRef hashObj = LCStringCreate(hash);
-  LCMemoryStreamLargeRef stream = LCMutableDictionaryValueForKey(memoryStoreData(cookie), hashObj);
+  LCMemoryStreamRef stream = LCMutableDictionaryValueForKey(memoryStoreData(cookie), hashObj);
   objectRelease(hashObj);
   if (stream) {
-    return LCMemoryStreamLargeReadFile(stream);
+    return LCMemoryStreamReadFile(stream);
   } else {
     return NULL;
   }
