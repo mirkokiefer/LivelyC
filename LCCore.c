@@ -144,7 +144,7 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   } else {
     fprintf(info->fp, ",\n");
   }
-  fprintf(info->fp, "%s: [", key);
+  fprintf(info->fp, "\"%s\": [", key);
   for (LCInteger i=0; i<length; i++) {
     if (i>0) {
       fprintf(info->fp, ",");
