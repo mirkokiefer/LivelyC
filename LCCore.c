@@ -217,12 +217,16 @@ static void deserializeJson(LCObjectRef object, json_value *json) {
   }
 }
 
+static void objectInitData(LCObjectRef object) {
+  object->data = object->type->initData();
+}
+
 void objectDeserialize(LCObjectRef object, FILE* fd) {
   if (object->type->serializeData) {
     void* data = object->type->deserializeData(object, fd);
     object->data = data;
   } else {
-    object->data = object->type->initData();
+    objectInitData(object);
     LCDataRef data = LCDataCreateFromFile(fd, fileLength(fd));
     char *jsonString = (char*)LCDataDataRef(data);
     json_value *json = json_parse(jsonString);

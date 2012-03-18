@@ -227,7 +227,23 @@ static char* test_object_persistence() {
   objectDeleteCache(array);
   objectCache(array);
   LCStringRef *strings = LCArrayObjects(array);
-  mu_assert("array persistence", LCStringEqual(string1, strings[0]));
+  mu_assert("array persistence", LCStringEqual(string1, strings[0]) && LCStringEqual(string2, strings[1]) &&
+            LCStringEqual(string3, strings[2]));
+  
+  LCArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
+  objectStore(mArray, context);
+  objectDeleteCache(mArray);
+  objectCache(mArray);
+  LCStringRef *strings1 = LCMutableArrayObjects(mArray);
+  mu_assert("mutable array persistence", LCStringEqual(string1, strings1[0]) && LCStringEqual(string2, strings1[1]) &&
+            LCStringEqual(string3, strings1[2]));
+  
+  LCKeyValueRef keyValue = LCKeyValueCreate(string1, array);
+  objectStore(keyValue, context);
+  objectDeleteCache(keyValue);
+  objectCache(keyValue);
+
+
   return 0;
 }
 

@@ -186,19 +186,15 @@ void arrayStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], si
 // LCMutableArray
 
 LCMutableArrayRef LCMutableArrayCreate(LCObjectRef objects[], size_t length) {
-  arrayDataRef newArray = malloc(sizeof(struct arrayData));
-  if (newArray) {
-    newArray->objects = NULL;
-    if(length > 0) {
-      arraySetObjects(newArray, objects, length);
-    } else {
-      resizeBuffer(newArray, 10);
-    }
-    newArray->length = length;
-    return objectCreate(LCTypeMutableArray, newArray);
+  arrayDataRef newArray = arrayInitData();
+  newArray->objects = NULL;
+  if(length > 0) {
+    arraySetObjects(newArray, objects, length);
   } else {
-    return NULL;
+    resizeBuffer(newArray, 10);
   }
+  newArray->length = length;
+  return objectCreate(LCTypeMutableArray, newArray);
 };
 
 inline LCObjectRef* LCMutableArrayObjects(LCMutableArrayRef array) {
