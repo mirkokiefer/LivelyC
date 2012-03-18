@@ -1,6 +1,6 @@
 
 #include "LCData.h"
-#include "LCMemoryStream.h"
+#include "LCPipe.h"
 #include "LCUtils.h"
 
 typedef struct data* dataRef;

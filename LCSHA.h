@@ -5,7 +5,7 @@
 #include "LCCore.h"
 #include "LCUtils.h"
 #include "LCString.h"
-#include "LCMemoryStream.h"
+#include "LCPipe.h"
 
 void createSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]);
 void* createHashContext(LCMemoryStreamRef stream);

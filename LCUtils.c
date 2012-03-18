@@ -1,6 +1,6 @@
 
 #include "LCUtils.h"
-#include "LCMemoryStream.h"
+#include "LCPipe.h"
 
 #define READ_BUFFER_SIZE 1024
 

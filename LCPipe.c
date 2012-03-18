@@ -1,5 +1,5 @@
 
-#include "LCMemoryStream.h"
+#include "LCPipe.h"
 #include "LCUtils.h"
 #include "unistd.h"
 

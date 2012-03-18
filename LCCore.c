@@ -2,7 +2,7 @@
 
 #include "LCCore.h"
 #include "LCUtils.h"
-#include "LCMemoryStream.h"
+#include "LCPipe.h"
 #include "LCSHA.h"
 
 struct LCObject {
