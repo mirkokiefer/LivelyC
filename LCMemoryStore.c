@@ -1,7 +1,7 @@
 
 #include "LCMemoryStore.h"
 #include "LCMutableDictionary.h"
-#include "LCMemoryStreamLarge.h"
+#include "LCMemoryStream.h"
 #include "LCString.h"
 
 FILE* memoryStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);

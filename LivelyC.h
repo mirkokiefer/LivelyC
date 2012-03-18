@@ -2,7 +2,7 @@
 #include "LCCore.h"
 #include "LCString.h"
 #include "LCPipe.h"
-#include "LCMemoryStreamLarge.h"
+#include "LCMemoryStream.h"
 #include "LCUtils.h"
 #include "LCArray.h"
 #include "LCKeyValue.h"

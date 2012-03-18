@@ -1,5 +1,5 @@
 
-#include "LCMemoryStreamLarge.h"
+#include "LCMemoryStream.h"
 #include "unistd.h"
 
 typedef struct memoryStreamLargeData* memoryStreamLargeDataRef;
