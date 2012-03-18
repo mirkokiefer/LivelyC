@@ -184,9 +184,9 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
 
 char* objectHash(LCObjectRef object) {
   if ((object->hash[0] == '\0') || !object->type->immutable) {
-    LCMemoryStreamRef memoryStream = LCMemoryStreamCreate();
+    LCPipeRef memoryStream = LCPipeCreate();
     void* context = createHashContext(memoryStream);
-    objectSerializeWithCallback(object, context, updateHashContext, LCMemoryStreamWriteFile(memoryStream));
+    objectSerializeWithCallback(object, context, updateHashContext, LCPipeWriteFile(memoryStream));
     finalizeHashContext(context, object->hash);
     objectRelease(memoryStream);
   }

@@ -4,7 +4,7 @@
 void computeSHA1(unsigned char data[], size_t length, LCByte buffer[]);
 
 struct serializationCookie {
-  LCMemoryStreamRef stream;
+  LCPipeRef stream;
   SHA_CTX context;
 };
 
@@ -17,7 +17,7 @@ void createSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]) {
 }
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-void* createHashContext(LCMemoryStreamRef stream) {
+void* createHashContext(LCPipeRef stream) {
   serializationCookieRef cookie = malloc(sizeof(struct serializationCookie));
   if (cookie) {
     cookie->stream = stream;
@@ -28,10 +28,10 @@ void* createHashContext(LCMemoryStreamRef stream) {
 
 void updateHashContext(void* context) {
   serializationCookieRef cookie = (serializationCookieRef)context;
-  fflush(LCMemoryStreamWriteFile(cookie->stream));
-  size_t length = LCMemoryStreamLength(cookie->stream);
+  fflush(LCPipeWriteFile(cookie->stream));
+  size_t length = LCPipeLength(cookie->stream);
   LCByte buffer[length];
-  LCMemoryStreamData(cookie->stream, buffer, length);
+  LCPipeData(cookie->stream, buffer, length);
   SHA1_Update(&(cookie->context), buffer, length);
 }
 

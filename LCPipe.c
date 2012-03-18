@@ -5,7 +5,7 @@
 
 typedef struct memoryStreamData* memoryStreamDataRef;
 
-void memoryStreamDealloc(LCMemoryStreamRef object);
+void memoryStreamDealloc(LCPipeRef object);
 
 struct memoryStreamData {
   FILE* write;
@@ -18,7 +18,7 @@ struct LCType memoryStreamType = {
 
 LCTypeRef LCTypeMemoryStream = &memoryStreamType;
 
-LCMemoryStreamRef LCMemoryStreamCreate() {
+LCPipeRef LCPipeCreate() {
   memoryStreamDataRef stream = malloc(sizeof(struct memoryStreamData));
   if (stream) {
     int filedes[2];
@@ -30,25 +30,25 @@ LCMemoryStreamRef LCMemoryStreamCreate() {
   return NULL;
 }
 
-FILE* LCMemoryStreamWriteFile(LCMemoryStreamRef streamObj) {
+FILE* LCPipeWriteFile(LCPipeRef streamObj) {
   memoryStreamDataRef data = objectData(streamObj);
   return data->write;
 }
 
-FILE* LCMemoryStreamReadFile(LCMemoryStreamRef streamObj) {
+FILE* LCPipeReadFile(LCPipeRef streamObj) {
   memoryStreamDataRef data = objectData(streamObj);
   return data->read;
 }
 
-size_t LCMemoryStreamLength(LCMemoryStreamRef streamObj) {
-  return fileLength(LCMemoryStreamReadFile(streamObj));
+size_t LCPipeLength(LCPipeRef streamObj) {
+  return fileLength(LCPipeReadFile(streamObj));
 }
 
-void LCMemoryStreamData(LCMemoryStreamRef streamObj, LCByte buffer[], size_t length) {
-  readFromFile(LCMemoryStreamReadFile(streamObj), buffer, length);
+void LCPipeData(LCPipeRef streamObj, LCByte buffer[], size_t length) {
+  readFromFile(LCPipeReadFile(streamObj), buffer, length);
 }
 
-void memoryStreamDealloc(LCMemoryStreamRef object) {
+void memoryStreamDealloc(LCPipeRef object) {
   memoryStreamDataRef streamData = objectData(object);
   fclose(streamData->write);
   fclose(streamData->read);

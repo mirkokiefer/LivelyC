@@ -8,7 +8,7 @@
 #include "LCPipe.h"
 
 void createSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]);
-void* createHashContext(LCMemoryStreamRef stream);
+void* createHashContext(LCPipeRef stream);
 void updateHashContext(void* context);
 void finalizeHashContext(void* context, char buffer[HASH_LENGTH]);
 #endif

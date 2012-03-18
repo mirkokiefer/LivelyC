@@ -18,18 +18,18 @@ static char* test_retain_counting() {
 }
 
 static char* test_memory_stream() {
-  LCMemoryStreamRef stream = LCMemoryStreamCreate();
-  FILE* fd = LCMemoryStreamWriteFile(stream);
+  LCPipeRef stream = LCPipeCreate();
+  FILE* fd = LCPipeWriteFile(stream);
   fprintf(fd, "123");
   fprintf(fd, "456789");
   fflush(fd);
   
-  size_t length = LCMemoryStreamLength(stream);
+  size_t length = LCPipeLength(stream);
   char buffer[length+1];
   buffer[length] = '\0';
-  readFromFile(LCMemoryStreamReadFile(stream), (LCByte*)buffer, length);
+  readFromFile(LCPipeReadFile(stream), (LCByte*)buffer, length);
   
-  mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
+  mu_assert("LCPipe read/write", strcmp("123456789", buffer)==0);
   return 0;
 }
 
