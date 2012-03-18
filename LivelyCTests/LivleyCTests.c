@@ -17,7 +17,7 @@ static char* test_retain_counting() {
   return 0;
 }
 
-static char* test_memory_stream() {
+static char* test_pipe() {
   LCPipeRef stream = LCPipeCreate();
   FILE* fd = LCPipeWriteFile(stream);
   fprintf(fd, "123");
@@ -33,7 +33,7 @@ static char* test_memory_stream() {
   return 0;
 }
 
-static char* test_memory_stream_large() {
+static char* test_memory_stream() {
   LCMemoryStreamRef stream = LCMemoryStreamCreate();
   FILE* fd = LCMemoryStreamWriteFile(stream);
   fprintf(fd, "123");
@@ -45,7 +45,7 @@ static char* test_memory_stream_large() {
   char buffer[length+1];
   buffer[length] = '\0';
   readFromFile(LCMemoryStreamReadFile(stream), (LCByte*)buffer, length);
-  
+  char* data = LCMemoryStreamData(stream);
   mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
   return 0;
 }
@@ -146,6 +146,7 @@ static char* test_array() {
   LCArrayRef mappedArray = LCArrayCreateArrayWithMap(array, NULL, arrayMap);
   mu_assert("LCArrayCreateArrayWithMap",
             LCStringEqualCString(LCArrayObjectAtIndex(mappedArray, 0), objectHash(string1)));
+    
   return 0;
 }
 
@@ -218,8 +219,8 @@ static char* test_object_persistence() {
 
 static char* all_tests() {
   mu_run_test(test_retain_counting);
+  mu_run_test(test_pipe);
   mu_run_test(test_memory_stream);
-  mu_run_test(test_memory_stream_large);
   mu_run_test(test_string);
   mu_run_test(test_array);
   mu_run_test(test_dictionary);
@@ -238,6 +239,6 @@ bool testsRun() {
     printf("ALL TESTS PASSED\n");
   }
   printf("Tests run: %d\n", tests_run);
-  
+    
   return result == 0;
 }
