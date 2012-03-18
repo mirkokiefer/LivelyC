@@ -3,23 +3,23 @@
 #include "LCUtils.h"
 #include "unistd.h"
 
-typedef struct memoryStreamData* memoryStreamDataRef;
+typedef struct pipeData* pipeDataRef;
 
-void memoryStreamDealloc(LCPipeRef object);
+void pipeDealloc(LCPipeRef object);
 
-struct memoryStreamData {
+struct pipeData {
   FILE* write;
   FILE* read;
 };
 
-struct LCType memoryStreamType = {
-  .dealloc = memoryStreamDealloc,
+struct LCType pipeType = {
+  .dealloc = pipeDealloc,
 };
 
-LCTypeRef LCTypeMemoryStream = &memoryStreamType;
+LCTypeRef LCTypeMemoryStream = &pipeType;
 
 LCPipeRef LCPipeCreate() {
-  memoryStreamDataRef stream = malloc(sizeof(struct memoryStreamData));
+  pipeDataRef stream = malloc(sizeof(struct pipeData));
   if (stream) {
     int filedes[2];
     pipe(filedes);
@@ -31,12 +31,12 @@ LCPipeRef LCPipeCreate() {
 }
 
 FILE* LCPipeWriteFile(LCPipeRef streamObj) {
-  memoryStreamDataRef data = objectData(streamObj);
+  pipeDataRef data = objectData(streamObj);
   return data->write;
 }
 
 FILE* LCPipeReadFile(LCPipeRef streamObj) {
-  memoryStreamDataRef data = objectData(streamObj);
+  pipeDataRef data = objectData(streamObj);
   return data->read;
 }
 
@@ -48,8 +48,8 @@ void LCPipeData(LCPipeRef streamObj, LCByte buffer[], size_t length) {
   readFromFile(LCPipeReadFile(streamObj), buffer, length);
 }
 
-void memoryStreamDealloc(LCPipeRef object) {
-  memoryStreamDataRef streamData = objectData(object);
+void pipeDealloc(LCPipeRef object) {
+  pipeDataRef streamData = objectData(object);
   fclose(streamData->write);
   fclose(streamData->read);
   lcFree(streamData);

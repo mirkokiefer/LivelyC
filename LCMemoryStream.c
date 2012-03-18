@@ -2,17 +2,17 @@
 #include "LCMemoryStream.h"
 #include "unistd.h"
 
-typedef struct memoryStreamLargeData* memoryStreamLargeDataRef;
+typedef struct memoryStreamData* memoryStreamDataRef;
 
-void memoryStreamLargeDealloc(LCMemoryStreamRef object);
-void memoryStreamLargeSerialize(LCMemoryStreamRef object, FILE* fd);
-static bool memoryStreamLargeResizeBuffer(memoryStreamLargeDataRef streamData, size_t length);
-int memoryStreamLargeWrite(void *cookie, const char *data, int length);
-fpos_t memoryStreamLargeSeek(void *cookie, fpos_t offset, int whence);
-int memoryStreamLargeRead(void *cookie, char *buffer, int length);
-int memoryStreamLargeClose(void *cookie);
+void memoryStreamDealloc(LCMemoryStreamRef object);
+void memoryStreamSerialize(LCMemoryStreamRef object, FILE* fd);
+static bool memoryStreamResizeBuffer(memoryStreamDataRef streamData, size_t length);
+int memoryStreamWrite(void *cookie, const char *data, int length);
+fpos_t memoryStreamSeek(void *cookie, fpos_t offset, int whence);
+int memoryStreamRead(void *cookie, char *buffer, int length);
+int memoryStreamClose(void *cookie);
 
-struct memoryStreamLargeData {
+struct memoryStreamData {
   char* buffer;
   size_t bufferLength;
   size_t dataWritten;
@@ -23,23 +23,23 @@ struct cookie {
   size_t position;
 };
 
-struct LCType memoryStreamLargeType = {
-  .dealloc = memoryStreamLargeDealloc,
+struct LCType memoryStreamType = {
+  .dealloc = memoryStreamDealloc,
 };
-LCTypeRef LCTypeMemoryStreamLarge = &memoryStreamLargeType;
+LCTypeRef LCTypeMemoryStreamLarge = &memoryStreamType;
 
 LCMemoryStreamRef LCMemoryStreamCreate() {
-  memoryStreamLargeDataRef stream = malloc(sizeof(struct memoryStreamLargeData));
+  memoryStreamDataRef stream = malloc(sizeof(struct memoryStreamData));
   if (stream) {
     stream->dataWritten = 0;
     stream->buffer = NULL;
-    memoryStreamLargeResizeBuffer(stream, 10);
+    memoryStreamResizeBuffer(stream, 10);
     return objectCreate(LCTypeMemoryStreamLarge, stream);
   }
   return NULL;
 }
 
-static struct cookie* memoryStreamLargeCreateCookie(LCMemoryStreamRef stream, size_t position) {
+static struct cookie* memoryStreamCreateCookie(LCMemoryStreamRef stream, size_t position) {
   struct cookie *cookie = malloc(sizeof(struct cookie));
   if (cookie) {
     cookie->stream = objectRetain(stream);
@@ -50,37 +50,37 @@ static struct cookie* memoryStreamLargeCreateCookie(LCMemoryStreamRef stream, si
 
 FILE* LCMemoryStreamWriteFile(LCMemoryStreamRef streamObj) {
   // on linux use fopencookie
-  memoryStreamLargeDataRef data = objectData(streamObj);
-  struct cookie *cookie = memoryStreamLargeCreateCookie(streamObj, data->dataWritten);
-  return funopen(cookie, memoryStreamLargeRead, memoryStreamLargeWrite, memoryStreamLargeSeek, memoryStreamLargeClose);
+  memoryStreamDataRef data = objectData(streamObj);
+  struct cookie *cookie = memoryStreamCreateCookie(streamObj, data->dataWritten);
+  return funopen(cookie, memoryStreamRead, memoryStreamWrite, memoryStreamSeek, memoryStreamClose);
 }
 
 FILE* LCMemoryStreamReadFile(LCMemoryStreamRef streamObj) {
-  struct cookie *cookie = memoryStreamLargeCreateCookie(streamObj, 0);
-  return funopen(cookie, memoryStreamLargeRead, NULL, memoryStreamLargeSeek, memoryStreamLargeClose);
+  struct cookie *cookie = memoryStreamCreateCookie(streamObj, 0);
+  return funopen(cookie, memoryStreamRead, NULL, memoryStreamSeek, memoryStreamClose);
 }
 
 size_t LCMemoryStreamLength(LCMemoryStreamRef streamObj) {
-  memoryStreamLargeDataRef streamData = objectData(streamObj);
+  memoryStreamDataRef streamData = objectData(streamObj);
   return streamData->dataWritten;
 }
 
 char* LCMemoryStreamData(LCMemoryStreamRef streamObj) {
-  memoryStreamLargeDataRef streamData = objectData(streamObj);
+  memoryStreamDataRef streamData = objectData(streamObj);
   return streamData->buffer;
 }
 
-void memoryStreamLargeDealloc(LCMemoryStreamRef object) {
-  memoryStreamLargeDataRef streamData = objectData(object);
+void memoryStreamDealloc(LCMemoryStreamRef object) {
+  memoryStreamDataRef streamData = objectData(object);
   free(streamData->buffer);
 }
 
-void memoryStreamLargeSerialize(LCMemoryStreamRef object, FILE* fd) {
-  memoryStreamLargeDataRef streamData = objectData(object);
+void memoryStreamSerialize(LCMemoryStreamRef object, FILE* fd) {
+  memoryStreamDataRef streamData = objectData(object);
   fwrite(streamData->buffer, sizeof(char), streamData->dataWritten, fd);
 }
 
-static bool memoryStreamLargeResizeBuffer(memoryStreamLargeDataRef streamData, size_t length) {
+static bool memoryStreamResizeBuffer(memoryStreamDataRef streamData, size_t length) {
   void* buffer = realloc(streamData->buffer, sizeof(char) * length);
   if(buffer) {
     streamData->buffer = buffer;
@@ -91,12 +91,12 @@ static bool memoryStreamLargeResizeBuffer(memoryStreamLargeDataRef streamData, s
   }
 }
 
-int memoryStreamLargeWrite(void *cookie, const char *data, int length) {
+int memoryStreamWrite(void *cookie, const char *data, int length) {
   struct cookie *cookieStruct = (struct cookie*)cookie;
   LCMemoryStreamRef streamObj = cookieStruct->stream;
-  memoryStreamLargeDataRef streamData = objectData(streamObj);
+  memoryStreamDataRef streamData = objectData(streamObj);
   if (cookieStruct->position+length >= streamData->bufferLength) {
-    memoryStreamLargeResizeBuffer(streamData, (streamData->bufferLength+length)*2);
+    memoryStreamResizeBuffer(streamData, (streamData->bufferLength+length)*2);
   }
   memcpy(&(streamData->buffer[cookieStruct->position]), data, sizeof(char)*length);
   cookieStruct->position = cookieStruct->position + length;
@@ -106,10 +106,10 @@ int memoryStreamLargeWrite(void *cookie, const char *data, int length) {
   return length;
 }
 
-fpos_t memoryStreamLargeSeek(void *cookie, fpos_t offset, int whence) {
+fpos_t memoryStreamSeek(void *cookie, fpos_t offset, int whence) {
   struct cookie *cookieStruct = (struct cookie*)cookie;
   LCMemoryStreamRef streamObj = cookieStruct->stream;
-  memoryStreamLargeDataRef streamData = objectData(streamObj);
+  memoryStreamDataRef streamData = objectData(streamObj);
   switch (whence) {
     case SEEK_SET:
       cookieStruct->position = offset;
@@ -125,7 +125,7 @@ fpos_t memoryStreamLargeSeek(void *cookie, fpos_t offset, int whence) {
   }
   if (cookieStruct->position >= streamData->bufferLength) {
     size_t oldLength = streamData->bufferLength;
-    memoryStreamLargeResizeBuffer(streamData, cookieStruct->position*2);
+    memoryStreamResizeBuffer(streamData, cookieStruct->position*2);
     for (LCInteger i=oldLength; i<cookieStruct->position; i++) {
       streamData->buffer[i] = 0;
     }
@@ -133,10 +133,10 @@ fpos_t memoryStreamLargeSeek(void *cookie, fpos_t offset, int whence) {
   return cookieStruct->position;
 }
 
-int memoryStreamLargeRead(void *cookie, char *buffer, int length) {
+int memoryStreamRead(void *cookie, char *buffer, int length) {
   struct cookie *cookieStruct = (struct cookie*)cookie;
   LCMemoryStreamRef streamObj = cookieStruct->stream;
-  memoryStreamLargeDataRef streamData = objectData(streamObj);
+  memoryStreamDataRef streamData = objectData(streamObj);
   if (cookieStruct->position >= streamData->dataWritten) {
     return 0;
   }
@@ -148,7 +148,7 @@ int memoryStreamLargeRead(void *cookie, char *buffer, int length) {
   return length;
 }
 
-int memoryStreamLargeClose(void *cookie) {
+int memoryStreamClose(void *cookie) {
   struct cookie *cookieStruct = (struct cookie*)cookie;
   objectRelease(cookieStruct->stream);
   return 0;
