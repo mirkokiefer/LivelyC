@@ -210,9 +210,8 @@ static char* test_data() {
   return 0;
 }
 
-static char* test_object_persistence() {
-  LCMemoryStoreRef store = LCMemoryStoreCreate();
-  LCContextRef context = contextCreate(LCMemoryStoreStoreObject(store), NULL, 0);
+static char* test_object_persistence_with_store(LCStoreRef store, char *storeType) {
+  LCContextRef context = contextCreate(store, NULL, 0);
   
   mu_assert("contextStringToType", contextStringToType(context, "LCString") == LCTypeString);
   
@@ -246,9 +245,24 @@ static char* test_object_persistence() {
   objectStore(keyValue, context);
   objectDeleteCache(keyValue);
   objectCache(keyValue);
-
-
   return 0;
+}
+
+static char* test_object_persistence() {
+  LCMemoryStoreRef store = LCMemoryStoreCreate();
+  char *memoryTest = test_object_persistence_with_store(LCMemoryStoreStoreObject(store), "memory");
+  if (memoryTest) {
+    return memoryTest;
+  }
+  
+  LCStringRef homeFolder = getHomeFolder();
+  char *strings[] = {LCStringChars(homeFolder), "/testing/"};
+  LCStringRef testPath = LCStringCreateFromStringArray(strings, 2);
+  LCFileStoreRef fileStore = LCFileStoreCreate(LCStringChars(testPath));
+  
+  char *fileTest = test_object_persistence_with_store(LCFileStoreStoreObject(fileStore), "file");
+  deleteDirectory(LCStringChars(testPath));
+  return fileTest;
 }
 
 static char* all_tests() {
