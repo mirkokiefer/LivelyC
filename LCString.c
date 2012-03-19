@@ -113,9 +113,9 @@ LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
     return LCEqual;
   }
   if (string1Length < string2Length) {
-    return LCGreater;
-  } else {
     return LCSmaller;
+  } else {
+    return LCGreater;
   }
 }
 

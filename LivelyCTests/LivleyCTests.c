@@ -75,13 +75,14 @@ static char* test_string() {
   LCStringRef string1 = LCStringCreate("abcd");
   LCStringRef string2 = LCStringCreate("abcde");
   LCStringRef string3 = LCStringCreate("abd");
-  mu_assert("LCStringCompare", (objectCompare(string1, string2) == LCGreater) &&
+  mu_assert("LCStringCompare", (objectCompare(string1, string2) == LCSmaller) &&
             (objectCompare(string1, string3) == LCSmaller) &&
             (objectCompare(string1, string1) == LCEqual) &&
             (objectCompare(string2, string3) == LCSmaller));
   
-  LCStringRef strings[] = {string1, string2, string3};
+  LCStringRef strings[] = {string2, string3, string1};
   objectsSort(strings, 3);
+  mu_assert("string objectsSort", (strings[0]==string1) && (strings[1]==string2) && (strings[2]==string3));
   return 0;
 }
 
