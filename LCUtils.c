@@ -89,7 +89,7 @@ void readFromFile(FILE *fp, LCByte buffer[], size_t length) {
 
 int makeDirectory(char* path) {
   struct stat sb;
-  if (!stat(path, &sb)) {
+  if (stat(path, &sb) != 0) {
     return mkdir(path, S_IRWXU);
   } else {
     return 0;
