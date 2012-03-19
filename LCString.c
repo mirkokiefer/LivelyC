@@ -60,6 +60,10 @@ LCStringRef LCStringCreateFromStringArray(char* strings[], size_t length) {
   return LCStringCreate(buffer);
 }
 
+LCStringRef LCStringCreateFromData(LCDataRef data) {
+  return LCStringCreateFromChars((char*)LCDataDataRef(data), LCDataLength(data));
+}
+
 char* LCStringChars(LCStringRef string) {
   return objectData(string);
 }
