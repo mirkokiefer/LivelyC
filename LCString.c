@@ -52,6 +52,19 @@ LCStringRef LCStringCreateFromStrings(LCStringRef strings[], size_t count) {
   return LCStringCreate(buffer);
 }
 
+LCStringRef LCStringCreateFromStringArray(char* strings[], size_t length) {
+  size_t totalLength = 1;
+  for (LCInteger i=0; i<length; i++) {
+    totalLength = totalLength + strlen(strings[i]);
+  }
+  char buffer[totalLength];
+  buffer[0]='\0';
+  for (LCInteger i=0; i<length; i++) {
+    strcat(buffer, strings[i]);
+  }
+  return LCStringCreate(buffer);
+}
+
 char* LCStringChars(LCStringRef string) {
   return objectData(string);
 }

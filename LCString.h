@@ -12,6 +12,7 @@ LCStringRef LCStringCreate(char *string);
 LCStringRef LCStringCreateFromHash(LCContextRef context, char hash[HASH_LENGTH]);
 LCStringRef LCStringCreateFromChars(char* characters, size_t length);
 LCStringRef LCStringCreateFromStrings(LCStringRef strings[], size_t count);
+LCStringRef LCStringCreateFromStringArray(char* characters[], size_t length);
 size_t LCStringLength(LCStringRef string);
 bool LCStringEqual(LCStringRef string1, LCStringRef string2);
 bool LCStringEqualCString(LCStringRef string, char* cString);

@@ -83,6 +83,10 @@ static char* test_string() {
   LCStringRef strings[] = {string2, string3, string1};
   objectsSort(strings, 3);
   mu_assert("string objectsSort", (strings[0]==string1) && (strings[1]==string2) && (strings[2]==string3));
+  
+  char *stringArr[] = {aCString, anIdenticalCString};
+  LCStringRef concat = LCStringCreateFromStringArray(stringArr, 2);
+  mu_assert("LCStringCreateFromStringArray", LCStringEqualCString(concat, "abcdabcd"));
   return 0;
 }
 
