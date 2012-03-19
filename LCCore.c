@@ -228,9 +228,12 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
   } else {
     objectInitData(object);
     LCDataRef data = LCDataCreateFromFile(fd, fileLength(fd));
-    char *jsonString = (char*)LCDataDataRef(data);
+    LCStringRef string = LCStringCreateFromData(data);
+    char *jsonString = LCStringChars(string);
     json_value *json = json_parse(jsonString);
     deserializeJson(object, json);
+    objectRelease(data);
+    objectRelease(string);
   }
 }
 
