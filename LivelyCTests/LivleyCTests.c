@@ -45,7 +45,6 @@ static char* test_memory_stream() {
   char buffer[length+1];
   buffer[length] = '\0';
   readFromFile(LCMemoryStreamReadFile(stream), (LCByte*)buffer, length);
-  char* data = LCMemoryStreamData(stream);
   mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
   return 0;
 }
