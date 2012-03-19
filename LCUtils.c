@@ -88,7 +88,12 @@ void readFromFile(FILE *fp, LCByte buffer[], size_t length) {
 }
 
 int makeDirectory(char* path) {
-  return mkdir(path, S_IRWXU);
+  struct stat sb;
+  if (!stat(path, &sb)) {
+    return mkdir(path, S_IRWXU);
+  } else {
+    return 0;
+  }
 }
 
 static int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
