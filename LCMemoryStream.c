@@ -14,19 +14,23 @@ struct internalWriteCookie {
 };
 
 struct internalReadCookie {
+  void *cookie;
   LCByte *data;
   size_t length;
   LCInteger position;
   bool freeOnClose;
+  closeStreamFun closeFun;
 };
 
-FILE* createMemoryReadStream(LCByte data[], size_t length, bool freeOnClose) {
+FILE* createMemoryReadStream(void *cookie, LCByte data[], size_t length, bool freeOnClose, closeStreamFun closeFun) {
   struct internalReadCookie *internalCookie = malloc(sizeof(struct internalReadCookie));
   if (internalCookie) {
+    internalCookie->cookie = cookie;
     internalCookie->data = data;
     internalCookie->length = length;
     internalCookie->position = 0;
     internalCookie->freeOnClose = freeOnClose;
+    internalCookie->closeFun = closeFun;
     return funopen(internalCookie, memoryStreamRead, NULL, NULL, NULL);
   } else {
     return NULL;
@@ -77,6 +81,9 @@ int memoryStreamReadClose(void *cookie) {
   struct internalReadCookie *internalCookie = (struct internalReadCookie*)cookie;
   if (internalCookie->freeOnClose) {
     lcFree(internalCookie->data);
+  }
+  if (internalCookie->closeFun) {
+    internalCookie->closeFun(cookie);
   }
   lcFree(cookie);
   return 0;

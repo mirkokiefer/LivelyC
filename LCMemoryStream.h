@@ -7,7 +7,7 @@
 typedef void(*writeStreamFun)(void *cookie, LCByte data[], size_t length);
 typedef void(*closeStreamFun)(void *cookie);
 
-FILE* createMemoryReadStream(LCByte data[], size_t length, bool freeOnClose);
+FILE* createMemoryReadStream(void *cookie, LCByte data[], size_t length, bool freeOnClose, closeStreamFun closeFun);
 FILE* createMemoryWriteStream(void *cookie, writeStreamFun writeFun, closeStreamFun closeFun);
 
 #endif

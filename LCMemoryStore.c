@@ -48,7 +48,7 @@ FILE* memoryStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCMutableDataRef data = LCMutableDictionaryValueForKey(memoryStoreData(cookie), hashObj);
   objectRelease(hashObj);
   if (data) {
-    return createMemoryReadStream(LCMutableDataDataRef(data), LCMutableDataLength(data), false);
+    return createMemoryReadStream(NULL, LCMutableDataDataRef(data), LCMutableDataLength(data), false, NULL);
   } else {
     return NULL;
   }
