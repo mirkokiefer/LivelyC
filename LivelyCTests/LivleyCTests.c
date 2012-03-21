@@ -36,7 +36,7 @@ static char* test_pipe() {
 static char* test_memory_stream() {
   char *test = "abcdef";
   size_t testLength = strlen(test);
-  FILE *read = createMemoryReadStream((LCByte*)test, testLength);
+  FILE *read = createMemoryReadStream((LCByte*)test, testLength, false);
   char readData[testLength];
   fscanf(read, "%s", readData);
   mu_assert("createMemoryReadStream", memcmp(test, readData, testLength)==0);
@@ -200,7 +200,7 @@ static char* test_data() {
   mu_assert("LCMutableDataAppend", strcmp((char*)LCMutableDataDataRef(mData), string3)==0);
   
   LCMutableDataRef mData2 = LCMutableDataCreate(NULL, 0);
-  FILE *fp = createMemoryReadStream((LCByte*)string3, strlen(string3)+1);
+  FILE *fp = createMemoryReadStream((LCByte*)string3, strlen(string3)+1, false);
   LCMutableDataAppendFromFile(mData2, fp, -1);
   LCMutableDataAppend(mData2, (LCByte*)"\0", 1);
   mu_assert("LCMutableDataAppendFromFile", strcmp((char*)LCMutableDataDataRef(mData2), string3)==0);

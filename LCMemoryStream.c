@@ -4,35 +4,41 @@
 
 int memoryStreamWrite(void *cookie, const char data[], int length);
 int memoryStreamRead(void *cookie, char *buffer, int length);
+int memoryStreamWriteClose(void *cookie);
+int memoryStreamReadClose(void *cookie);
 
 struct internalWriteCookie {
   void *cookie;
-  writeStreamFun fun;
+  writeStreamFun writeFun;
+  closeStreamFun closeFun;
 };
 
 struct internalReadCookie {
   LCByte *data;
   size_t length;
   LCInteger position;
+  bool freeOnClose;
 };
 
-FILE* createMemoryReadStream(LCByte data[], size_t length) {
+FILE* createMemoryReadStream(LCByte data[], size_t length, bool freeOnClose) {
   struct internalReadCookie *internalCookie = malloc(sizeof(struct internalReadCookie));
   if (internalCookie) {
     internalCookie->data = data;
     internalCookie->length = length;
     internalCookie->position = 0;
+    internalCookie->freeOnClose = freeOnClose;
     return funopen(internalCookie, memoryStreamRead, NULL, NULL, NULL);
   } else {
     return NULL;
   }
 }
 
-FILE* createMemoryWriteStream(void *cookie, writeStreamFun fun) {
+FILE* createMemoryWriteStream(void *cookie, writeStreamFun writeFun, closeStreamFun closeFun) {
   struct internalWriteCookie *internalCookie = malloc(sizeof(struct internalWriteCookie));
   if (internalCookie) {
     internalCookie->cookie = cookie;
-    internalCookie->fun = fun;
+    internalCookie->writeFun = writeFun;
+    internalCookie->closeFun = closeFun;
     return funopen(internalCookie, NULL, memoryStreamWrite, NULL, NULL);
   } else {
     return NULL;
@@ -41,7 +47,7 @@ FILE* createMemoryWriteStream(void *cookie, writeStreamFun fun) {
 
 int memoryStreamWrite(void *cookie, const char data[], int length) {
   struct internalWriteCookie *internalCookie = (struct internalWriteCookie*)cookie;
-  internalCookie->fun(internalCookie->cookie, (LCByte*)data, length);
+  internalCookie->writeFun(internalCookie->cookie, (LCByte*)data, length);
   return length;
 }
 
@@ -58,7 +64,20 @@ int memoryStreamRead(void *cookie, char *buffer, int length) {
   return length;
 }
 
-int memoryStreamClose(void *cookie) {
+int memoryStreamWriteClose(void *cookie) {
+  struct internalWriteCookie *internalCookie = (struct internalWriteCookie*)cookie;
+  if (internalCookie->closeFun) {
+    internalCookie->closeFun(internalCookie->cookie);
+  }
+  lcFree(cookie);
+  return 0;
+}
+
+int memoryStreamReadClose(void *cookie) {
+  struct internalReadCookie *internalCookie = (struct internalReadCookie*)cookie;
+  if (internalCookie->freeOnClose) {
+    lcFree(internalCookie->data);
+  }
   lcFree(cookie);
   return 0;
 }

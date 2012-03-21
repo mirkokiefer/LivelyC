@@ -34,7 +34,7 @@ FILE* memoryStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCMutableDictionarySetValueForKey(memoryStoreData(cookie), hashObj, data);
   objectRelease(data);
   objectRelease(hashObj);
-  return createMemoryWriteStream(data, LCMutableDataAppendAlt);
+  return createMemoryWriteStream(data, LCMutableDataAppendAlt, NULL);
 }
 
 void memoryStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
@@ -48,7 +48,7 @@ FILE* memoryStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCMutableDataRef data = LCMutableDictionaryValueForKey(memoryStoreData(cookie), hashObj);
   objectRelease(hashObj);
   if (data) {
-    return createMemoryReadStream(LCMutableDataDataRef(data), LCMutableDataLength(data));
+    return createMemoryReadStream(LCMutableDataDataRef(data), LCMutableDataLength(data), false);
   } else {
     return NULL;
   }
