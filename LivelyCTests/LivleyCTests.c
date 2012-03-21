@@ -203,10 +203,7 @@ static char* test_data() {
   fprintf(fpw, "%s", writeString);
   fclose(fpw);
   
-  FILE *fpr = LCMemoryStreamReadFile(stream);
-  LCDataRef dataFromFile = LCDataCreateFromFile(fpr, -1);
-  char *data = (char*)LCDataDataRef(dataFromFile);
-  mu_assert("LCDataCreateFromFile", memcmp(writeString, data, strlen(writeString))==0);
+  
   return 0;
 }
 

@@ -10,3 +10,4 @@
 #include "LCSHA.h"
 #include "LCMemoryStore.h"
 #include "LCFileStore.h"
+#include "LCMutableData.h"

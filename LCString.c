@@ -1,6 +1,7 @@
 
 #include "LCString.h"
 #include "LCUtils.h"
+#include "LCMutableData.h"
 
 LCCompare stringCompare(LCStringRef object1, LCStringRef object2);
 void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
@@ -137,8 +138,9 @@ void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp)
 }
 
 void* stringDeserialize(LCStringRef object, FILE *fp) {
-  LCDataRef data = LCDataCreateFromFile(fp, fileLength(fp));
-  char* serializedString = (char*)LCDataDataRef(data);
+  LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
+  LCMutableDataAppendFromFile(data, fp, fileLength(fp));
+  char* serializedString = (char*)LCMutableDataDataRef(data);
   size_t stringLength = LCDataLength(data)-2;
   char* buffer = malloc(sizeof(char)*(stringLength+1));
   if (buffer) {
