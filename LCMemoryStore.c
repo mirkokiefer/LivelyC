@@ -3,6 +3,7 @@
 #include "LCMutableDictionary.h"
 #include "LCMemoryStream.h"
 #include "LCString.h"
+#include "LCMutableData.h"
 
 FILE* memoryStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 void memoryStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
@@ -28,12 +29,12 @@ LCStoreRef LCMemoryStoreStoreObject(LCMemoryStoreRef store) {
 }
 
 FILE* memoryStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
-  LCMemoryStreamRef stream = LCMemoryStreamCreate();
+  LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
   LCStringRef hashObj = LCStringCreate(hash);
-  LCMutableDictionarySetValueForKey(memoryStoreData(cookie), hashObj, stream);
-  objectRelease(stream);
+  LCMutableDictionarySetValueForKey(memoryStoreData(cookie), hashObj, data);
+  objectRelease(data);
   objectRelease(hashObj);
-  return LCMemoryStreamWriteFile(stream);
+  return createMemoryWriteStream(data, LCMutableDataAppendAlt);
 }
 
 void memoryStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
@@ -44,10 +45,10 @@ void memoryStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
 
 FILE* memoryStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCStringRef hashObj = LCStringCreate(hash);
-  LCMemoryStreamRef stream = LCMutableDictionaryValueForKey(memoryStoreData(cookie), hashObj);
+  LCMutableDataRef data = LCMutableDictionaryValueForKey(memoryStoreData(cookie), hashObj);
   objectRelease(hashObj);
-  if (stream) {
-    return LCMemoryStreamReadFile(stream);
+  if (data) {
+    return createMemoryReadStream(LCMutableDataDataRef(data), LCMutableDataLength(data));
   } else {
     return NULL;
   }

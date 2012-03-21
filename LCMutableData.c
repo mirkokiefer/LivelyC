@@ -53,6 +53,7 @@ LCMutableDataRef LCMutableDataCreate(LCByte data[], size_t length) {
   mutableDataRef dataStruct = dataCreateStruct();
   mutableDataEnsureLength(dataStruct, length);
   memcpy(dataStruct->data, data, length*sizeof(LCByte));
+  dataStruct->length = length;
   return objectCreate(LCTypeMutableData, dataStruct);
 };
 
@@ -84,6 +85,10 @@ void LCMutableDataAppend(LCMutableDataRef object, LCByte data[], size_t length) 
   mutableDataEnsureLength(dataStruct, length);
   memcpy(&(dataStruct->data[dataStruct->length]), data, length * sizeof(LCByte));
   dataStruct->length = dataStruct->length + length;
+}
+
+void LCMutableDataAppendAlt(void *object, LCByte data[], size_t length) {
+  LCMutableDataAppend(object, data, length);
 }
 
 void mutableDataDealloc(LCObjectRef data) {

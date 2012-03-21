@@ -34,18 +34,12 @@ static char* test_pipe() {
 }
 
 static char* test_memory_stream() {
-  LCMemoryStreamRef stream = LCMemoryStreamCreate();
-  FILE* fd = LCMemoryStreamWriteFile(stream);
-  fprintf(fd, "123");
-  fprintf(fd, "456789");
-  fflush(fd);
-  
-  FILE* fpr = LCMemoryStreamReadFile(stream);
-  size_t length = fileLength(fpr);
-  char buffer[length+1];
-  buffer[length] = '\0';
-  readFromFile(LCMemoryStreamReadFile(stream), (LCByte*)buffer, length);
-  mu_assert("LCMemoryStream read/write", strcmp("123456789", buffer)==0);
+  char *test = "abcdef";
+  size_t testLength = strlen(test);
+  FILE *read = createMemoryReadStream((LCByte*)test, testLength);
+  char readData[testLength];
+  fscanf(read, "%s", readData);
+  mu_assert("createMemoryReadStream", memcmp(test, readData, testLength)==0);
   return 0;
 }
 
@@ -190,20 +184,26 @@ static char* test_sha1() {
 }
 
 static char* test_data() {
-  char* aCString = "normal string";
+  char* aCString = "123456";
   
   LCDataRef aData = LCDataCreate((LCByte*)aCString, strlen(aCString)+1);
   LCByte* dataFromLCData = LCDataDataRef(aData);
   
   mu_assert("LCData stores data correctly", strcmp(aCString, (char*)dataFromLCData)==0);
   
-  LCMemoryStreamRef stream = LCMemoryStreamCreate();
-  FILE *fpw = LCMemoryStreamWriteFile(stream);
-  char* writeString = "123456";
-  fprintf(fpw, "%s", writeString);
-  fclose(fpw);
+  LCMutableDataRef mData = LCMutableDataCreate((LCByte*)aCString, strlen(aCString));
+  char *string2 = "78910";
+  LCMutableDataAppend(mData, (LCByte*)string2, strlen(string2));
+  LCMutableDataAppend(mData, (LCByte*)"\0", 1);
   
+  char *string3 = "12345678910";
+  mu_assert("LCMutableDataAppend", strcmp((char*)LCMutableDataDataRef(mData), string3)==0);
   
+  LCMutableDataRef mData2 = LCMutableDataCreate(NULL, 0);
+  FILE *fp = createMemoryReadStream((LCByte*)string3, strlen(string3)+1);
+  LCMutableDataAppendFromFile(mData2, fp, -1);
+  LCMutableDataAppend(mData2, (LCByte*)"\0", 1);
+  mu_assert("LCMutableDataAppendFromFile", strcmp((char*)LCMutableDataDataRef(mData2), string3)==0);
   return 0;
 }
 

@@ -4,13 +4,9 @@
 
 #include "LCCore.h"
 
-typedef LCObjectRef LCMemoryStreamRef;
-extern LCTypeRef LCTypeMemoryStreamLarge;
+typedef void(*writeStreamFun)(void *cookie, LCByte data[], size_t length);
 
-LCMemoryStreamRef LCMemoryStreamCreate();
-FILE* LCMemoryStreamWriteFile(LCMemoryStreamRef streamObj);
-FILE* LCMemoryStreamReadFile(LCMemoryStreamRef streamObj);
-size_t LCMemoryStreamLength(LCMemoryStreamRef streamObj);
-char* LCMemoryStreamData(LCMemoryStreamRef streamObj);
+FILE* createMemoryReadStream(LCByte data[], size_t length);
+FILE* createMemoryWriteStream(void *cookie, writeStreamFun fun);
 
 #endif

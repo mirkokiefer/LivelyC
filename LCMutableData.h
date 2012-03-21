@@ -11,5 +11,6 @@ LCMutableDataRef LCMutableDataCreate(LCByte data[], size_t length);
 size_t LCMutableDataLength(LCMutableDataRef object);
 LCByte* LCMutableDataDataRef(LCMutableDataRef object);
 void LCMutableDataAppend(LCMutableDataRef object, LCByte data[], size_t length);
+void LCMutableDataAppendAlt(void *object, LCByte data[], size_t length);
 void LCMutableDataAppendFromFile(LCMutableDataRef object, FILE* fp, size_t fileLength);
 #endif
