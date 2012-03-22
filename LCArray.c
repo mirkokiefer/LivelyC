@@ -58,6 +58,7 @@ static void arraySetObjects(arrayDataRef data, LCObjectRef objects[], size_t len
   }
   resizeBuffer(data, length);
   memcpy(data->objects, objects, length * sizeof(LCObjectRef));
+  data->length = length;
 }
 
 LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
@@ -68,7 +69,6 @@ LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
   arrayDataRef newArray = arrayInitData();
   newArray->objects = NULL;
   arraySetObjects(newArray, objects, length);
-  newArray->length = length;
   return objectCreate(LCTypeArray, newArray);
 };
 
@@ -167,6 +167,7 @@ LCCompare arrayCompare(LCObjectRef array1, LCObjectRef array2) {
 }
 
 void arrayDealloc(LCObjectRef object) {
+  arrayDataRef data = objectData(object);
   for (LCInteger i=0; i<LCArrayLength(object); i++) {
     objectRelease(LCArrayObjectAtIndex(object, i));
   }
@@ -193,7 +194,6 @@ LCMutableArrayRef LCMutableArrayCreate(LCObjectRef objects[], size_t length) {
   } else {
     resizeBuffer(newArray, 10);
   }
-  newArray->length = length;
   return objectCreate(LCTypeMutableArray, newArray);
 };
 
