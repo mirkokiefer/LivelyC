@@ -11,7 +11,7 @@ struct LCObject {
   LCInteger rCount;
   LCContextRef context;
   bool persisted;
-  char hash[HASH_LENGTH];
+  char *hash;
   void *data;
 };
 
@@ -35,6 +35,25 @@ struct LCSerializationCookie {
   bool first;
 };
 
+static char* _objectHash(LCObjectRef object) {
+  return object->hash;
+}
+
+static void _objectSetHash(LCObjectRef object, char hash[HASH_LENGTH]) {
+  if (!object->hash) {
+    object->hash = malloc(sizeof(char)*HASH_LENGTH);
+  }
+  strcpy(object->hash, hash);
+}
+
+static bool _objectPersisted(LCObjectRef object) {
+  return object->persisted;
+}
+
+static void _objectSetPersisted(LCObjectRef object, bool persisted) {
+  object->persisted = persisted;
+}
+
 LCObjectRef objectCreate(LCTypeRef type, void* data) {
   LCObjectRef object = malloc(sizeof(struct LCObject));
   if (object) {
@@ -43,7 +62,7 @@ LCObjectRef objectCreate(LCTypeRef type, void* data) {
     object->data = data;
     object->persisted = false;
     object->context = NULL;
-    object->hash[0] = '\0';
+    object->hash = NULL;
   }
   return object;
 }
@@ -55,7 +74,7 @@ LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char h
   object->persisted = true;
   object->context = context;
   if (hash) {
-    strcpy(object->hash, hash);
+    _objectSetHash(object, hash);
   }
   return object;
 }
@@ -162,7 +181,9 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
     if (i>0) {
       fprintf(info->fp, ",");
     }
-    fprintf(info->fp, "\{\"type\": \"%s\", \"hash\": \"%s\"}", typeName(objectType(objects[i])), objectHash(objects[i]));
+    char hash[HASH_LENGTH];
+    objectHash(objects[i], hash);
+    fprintf(info->fp, "\{\"type\": \"%s\", \"hash\": \"%s\"}", typeName(objectType(objects[i])), hash);
   }
   fprintf(info->fp, "]");
 }
@@ -251,16 +272,20 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
   }
 }
 
-char* objectHash(LCObjectRef object) {
-  if ((object->hash[0] == '\0') || (!object->type->immutable && !object->persisted)) {
+void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
+  if (!_objectHash(object) || !object->type->immutable) {
     LCPipeRef memoryStream = LCPipeCreate();
     void* context = createHashContext(memoryStream);
     FILE *fp = objectSerializedFile(object);
     pipeFileToFunction(context, fp, updateHashContext, FILE_BUFFER_LENGTH);
-    finalizeHashContext(context, object->hash);
+    finalizeHashContext(context, hashBuffer);
     objectRelease(memoryStream);
+  } else {
+    strcpy(hashBuffer, _objectHash(object));
   }
-  return object->hash;
+  if (object->type->immutable) {
+    _objectSetHash(object, hashBuffer);
+  }
 }
 
 static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
@@ -271,13 +296,27 @@ static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], s
 }
 
 void objectStore(LCObjectRef object, LCContextRef context) {
+  char hash[HASH_LENGTH];
+  hash[0] = '\0';
+  if (!object->type->immutable && object->persisted) {
+    objectHash(object, hash);
+    if (strcmp(hash, _objectHash(object)) != 0) {
+      object->persisted = false;
+    }
+  }
   if (!object->persisted) {
-    FILE* fp = context->store->writefn(context->store->cookie, objectType(object), objectHash(object));
+    if (hash[0] == '\0') {
+      objectHash(object, hash);
+    }
+    FILE* fp = context->store->writefn(context->store->cookie, objectType(object), hash);
     object->context = context;
     objectSerialize(object, fp);
     objectWalkChildren(object, object, storeChildCallback);
     object->persisted = true;
     fclose(fp);
+    if (!object->type->immutable) {
+      _objectSetHash(object, hash);
+    }
   }
 }
 
@@ -291,7 +330,7 @@ void objectCache(LCObjectRef object) {
   if (!object->data) {
     LCContextRef context = objectContext(object);
     if (context) {
-      FILE* fp = context->store->readfn(context->store->cookie, objectType(object), objectHash(object));
+      FILE* fp = context->store->readfn(context->store->cookie, objectType(object), _objectHash(object));
       objectDeserialize(object, fp);
       fclose(fp);
     }

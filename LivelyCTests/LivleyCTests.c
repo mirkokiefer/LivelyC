@@ -86,7 +86,9 @@ static char* test_string() {
 
 void* arrayMap(LCInteger i, void* info, void* each) {
   LCStringRef string = (LCStringRef)each;
-  return LCStringCreate(objectHash(string));
+  char hash[HASH_LENGTH];
+  objectHash(string, hash);
+  return LCStringCreate(hash);
 }
 
 static char* test_array() {
@@ -142,8 +144,10 @@ static char* test_array() {
   mu_assert("LCArrayCreateFromArrays", LCArrayLength(mergedArray)==2*LCArrayLength(array));
   
   LCArrayRef mappedArray = LCArrayCreateArrayWithMap(array, NULL, arrayMap);
+  char string1Hash[HASH_LENGTH];
+  objectHash(string1, string1Hash);
   mu_assert("LCArrayCreateArrayWithMap",
-            LCStringEqualCString(LCArrayObjectAtIndex(mappedArray, 0), objectHash(string1)));
+            LCStringEqualCString(LCArrayObjectAtIndex(mappedArray, 0), string1Hash));
     
   return 0;
 }
@@ -216,7 +220,7 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   LCStringRef test = LCStringCreate(string);
   objectStore(test, context);
   objectDeleteCache(test);
-  mu_assert("object persistence", LCStringEqualCString(test, string));
+  mu_assert("string persistence", LCStringEqualCString(test, string));
   
   LCStringRef string1 = LCStringCreate("abc");
   LCStringRef string2 = LCStringCreate("def");
@@ -225,7 +229,6 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   LCArrayRef array = LCArrayCreate(stringArray, 3);
   objectStore(array, context);
   objectDeleteCache(array);
-  objectCache(array);
   LCStringRef *strings = LCArrayObjects(array);
   mu_assert("array persistence", LCStringEqual(string1, strings[0]) && LCStringEqual(string2, strings[1]) &&
             LCStringEqual(string3, strings[2]));
@@ -233,7 +236,6 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   LCArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
   objectStore(mArray, context);
   objectDeleteCache(mArray);
-  objectCache(mArray);
   LCStringRef *strings1 = LCMutableArrayObjects(mArray);
   mu_assert("mutable array persistence", LCStringEqual(string1, strings1[0]) && LCStringEqual(string2, strings1[1]) &&
             LCStringEqual(string3, strings1[2]));
@@ -242,6 +244,7 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   objectStore(keyValue, context);
   objectDeleteCache(keyValue);
   objectCache(keyValue);
+  mu_assert("keyValue persistence", LCStringEqual(LCKeyValueKey(keyValue), string1));
   return 0;
 }
 

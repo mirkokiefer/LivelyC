@@ -81,7 +81,7 @@ LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
-char* objectHash(LCObjectRef object);
+void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]);
 void objectStore(LCObjectRef object, LCContextRef context);
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);
 void objectCache(LCObjectRef object);

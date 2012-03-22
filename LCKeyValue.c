@@ -72,11 +72,11 @@ void keyValueWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
 
 void keyValueStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
   keyValueDataRef data = objectData(object);
-  if (strcmp(key, "key")) {
+  if (strcmp(key, "key")==0) {
     data->key = objectRetain(*objects);
     return;
   } else
-  if (strcmp(key, "value")) {
+  if (strcmp(key, "value")==0) {
     data->value = objectRetain(*objects);
   }
 }
