@@ -8,7 +8,6 @@ typedef LCObjectRef LCPipeRef;
 extern LCTypeRef LCTypeMemoryStream;
 
 LCPipeRef LCPipeCreate();
-LCPipeRef LCPipeCreateFromFile(FILE* fp);
 FILE* LCPipeWriteFile(LCPipeRef streamObj);
 FILE* LCPipeReadFile(LCPipeRef streamObj);
 size_t LCPipeLength(LCPipeRef streamObj);
