@@ -33,6 +33,9 @@ typedef struct LCContext* LCContextRef;
 
 typedef LCTypeRef(*stringToType)(char *typeString);
 
+typedef void(*writeStreamFun)(void *cookie, LCByte data[], size_t length);
+typedef void(*closeStreamFun)(void *cookie);
+
 typedef void*(*LCCreateEachCb)(LCInteger i, void* info, void* each);
 
 typedef FILE*(*writeData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
@@ -55,7 +58,7 @@ struct LCType {
   LCFormat serializationFormat;
   void (*dealloc)(LCObjectRef object);
   LCCompare (*compare)(LCObjectRef object1, LCObjectRef object2);
-  void (*serializeData)(LCObjectRef object, void *cookie, callback flushFunct, FILE *fd);
+  FILE* (*serializeData)(LCObjectRef object);
   void* (*deserializeData)(LCObjectRef object, FILE *fd);
   void* (*initData)();
   void (*walkChildren)(LCObjectRef object, void *cookie, childCallback cb);
@@ -71,6 +74,7 @@ bool objectImmutable(LCObjectRef object);
 bool objectsImmutable(LCObjectRef objects[], size_t length);
 LCObjectRef objectRetain(LCObjectRef object);
 LCObjectRef objectRelease(LCObjectRef object);
+void objectReleaseAlt(void *object);
 LCInteger objectRetainCount(LCObjectRef object);
 LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);

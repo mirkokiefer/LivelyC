@@ -25,5 +25,8 @@ void readFromFile(FILE *fd, LCByte buffer[], size_t length);
 int makeDirectory(char *path);
 int deleteDirectory(char *path);
 LCStringRef getHomeFolder();
+int pipeFiles(FILE *read, FILE *write, size_t bufferLength);
+int pipeFileToFunction(void *cookie, FILE *read, writeStreamFun writeFun, size_t bufferLength);
+
 
 #endif

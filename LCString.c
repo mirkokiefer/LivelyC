@@ -2,9 +2,10 @@
 #include "LCString.h"
 #include "LCUtils.h"
 #include "LCMutableData.h"
+#include "LCMemoryStream.h"
 
 LCCompare stringCompare(LCStringRef object1, LCStringRef object2);
-void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
+FILE* stringSerialize(LCObjectRef object);
 void* stringDeserialize(LCObjectRef object, FILE* fd);
 
 
@@ -132,20 +133,20 @@ LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
   }
 }
 
-void stringSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fp) {
-  char* stringData = objectData(object);
-  fprintf(fp, "\"%s\"", stringData);
+FILE* stringSerialize(LCObjectRef object) {
+  objectRetain(object);
+  return createMemoryReadStream(object, (LCByte*)LCStringChars(object), LCStringLength(object), false, objectReleaseAlt);
 }
 
 void* stringDeserialize(LCStringRef object, FILE *fp) {
   LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
   LCMutableDataAppendFromFile(data, fp, fileLength(fp));
   char* serializedString = (char*)LCMutableDataDataRef(data);
-  size_t stringLength = LCDataLength(data)-2;
+  size_t stringLength = LCDataLength(data);
   char* buffer = malloc(sizeof(char)*(stringLength+1));
   if (buffer) {
     buffer[stringLength] = '\0';
-    memcpy(buffer, &serializedString[1], sizeof(char)*stringLength);
+    memcpy(buffer, serializedString, sizeof(char)*stringLength);
     objectRelease(data);
     return buffer;
   } else {

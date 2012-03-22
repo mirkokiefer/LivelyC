@@ -18,28 +18,22 @@ void createSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]) {
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void* createHashContext(LCPipeRef stream) {
-  serializationCookieRef cookie = malloc(sizeof(struct serializationCookie));
-  if (cookie) {
-    cookie->stream = stream;
-    SHA1_Init(&(cookie->context));
+  SHA_CTX *context = malloc(sizeof(SHA_CTX));
+  if (context) {
+    SHA1_Init(context);
   }
-  return cookie;
+  return context;
 }
 
-void updateHashContext(void* context) {
-  serializationCookieRef cookie = (serializationCookieRef)context;
-  fflush(LCPipeWriteFile(cookie->stream));
-  size_t length = LCPipeLength(cookie->stream);
-  LCByte buffer[length];
-  LCPipeData(cookie->stream, buffer, length);
-  SHA1_Update(&(cookie->context), buffer, length);
+void updateHashContext(void* cookie, LCByte data[], size_t length) {
+  SHA_CTX *context = (SHA_CTX*)cookie;
+  SHA1_Update(context, data, length);
 }
 
-void finalizeHashContext(void* context, char buffer[HASH_LENGTH]) {
-  serializationCookieRef cookie = (serializationCookieRef)context;
-  updateHashContext(context);
+void finalizeHashContext(void* cookie, char buffer[HASH_LENGTH]) {
+  SHA_CTX *context = (SHA_CTX*)cookie;
   LCByte byteBuffer[LC_HASH_BYTE_LENGTH];
-  SHA1_Final(byteBuffer, &(cookie->context));
+  SHA1_Final(byteBuffer, context);
   createHexString(byteBuffer, LC_HASH_BYTE_LENGTH, buffer);
 }
 

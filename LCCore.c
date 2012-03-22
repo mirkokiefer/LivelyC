@@ -4,6 +4,8 @@
 #include "LCUtils.h"
 #include "LivelyC.h"
 
+#define FILE_BUFFER_LENGTH 1024
+
 struct LCObject {
   LCTypeRef type;
   LCInteger rCount;
@@ -29,6 +31,7 @@ struct LCContext {
 struct LCSerializationCookie {
   FILE *fp;
   LCObjectRef object;
+  LCInteger levels;
   bool first;
 };
 
@@ -107,6 +110,10 @@ LCObjectRef objectRelease(LCObjectRef object) {
   return object;
 }
 
+void objectReleaseAlt(void *object) {
+  objectRelease(object);
+}
+
 LCInteger objectRetainCount(LCObjectRef object) {
   return object->rCount;
 }
@@ -142,10 +149,6 @@ static void objectWalkChildren(LCObjectRef object, void *cookie, childCallback c
   }
 }
 
-static void objectSerializeDataWithCallback(LCObjectRef object, void *cookie, callback flushFunct, FILE *fp) {
-  object->type->serializeData(object, cookie, flushFunct, fp);
-}
-
 // todo: depth parameter not considered - should serialize children as composite objects accordingly
 static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
   struct LCSerializationCookie *info = (struct LCSerializationCookie*)cookie;
@@ -164,23 +167,34 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   fprintf(info->fp, "]");
 }
 
-static void objectSerializeWithCallback(LCObjectRef object, void* cookie, callback cb, FILE *fp) {
+static void objectSerializeWalkingChildren(LCObjectRef object, FILE *fpw) {
+  struct LCSerializationCookie cookie = {
+    .fp = fpw,
+    .object = object,
+    .first = true
+  };
+  fprintf(fpw, "{");
+  objectWalkChildren(object, &cookie, serializeChildCallback);
+  fprintf(fpw, "}");
+}
+
+static FILE* objectSerializedFile(LCObjectRef object) {
   if (object->type->serializeData) {
-    objectSerializeDataWithCallback(object, NULL, cb, fp);
+    return object->type->serializeData(object);
   } else {
-    struct LCSerializationCookie cookie = {
-      .fp = fp,
-      .object = object,
-      .first = true
-    };
-    fprintf(fp, "{");
-    objectWalkChildren(object, &cookie, serializeChildCallback);
-    fprintf(fp, "}");
+    LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
+    objectSerializeWalkingChildren(object, createMemoryWriteStream(data, LCMutableDataAppendAlt, NULL));
+    return createMemoryReadStream(data, LCMutableDataDataRef(data), LCMutableDataLength(data), false, objectReleaseAlt);
   }
 }
 
-void objectSerialize(LCObjectRef object, FILE *fp) {
-  objectSerializeWithCallback(object, NULL, NULL, fp);
+void objectSerialize(LCObjectRef object, FILE *fpw) {
+  if (object->type->serializeData) {
+    FILE *fpr = object->type->serializeData(object);
+    pipeFiles(fpr, fpw, FILE_BUFFER_LENGTH);
+  } else {
+    objectSerializeWalkingChildren(object, fpw);
+  }
 }
 
 static void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
@@ -222,7 +236,7 @@ static void objectInitData(LCObjectRef object) {
 }
 
 void objectDeserialize(LCObjectRef object, FILE* fd) {
-  if (object->type->serializeData) {
+  if (object->type->deserializeData) {
     void* data = object->type->deserializeData(object, fd);
     object->data = data;
   } else {
@@ -241,7 +255,8 @@ char* objectHash(LCObjectRef object) {
   if ((object->hash[0] == '\0') || (!object->type->immutable && !object->persisted)) {
     LCPipeRef memoryStream = LCPipeCreate();
     void* context = createHashContext(memoryStream);
-    objectSerializeWithCallback(object, context, updateHashContext, LCPipeWriteFile(memoryStream));
+    FILE *fp = objectSerializedFile(object);
+    pipeFileToFunction(context, fp, updateHashContext, FILE_BUFFER_LENGTH);
     finalizeHashContext(context, object->hash);
     objectRelease(memoryStream);
   }

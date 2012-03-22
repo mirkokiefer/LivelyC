@@ -114,3 +114,21 @@ LCStringRef getHomeFolder() {
   struct passwd *passwdEnt = getpwuid(getuid());
   return LCStringCreate(passwdEnt->pw_dir);
 }
+
+int pipeFiles(FILE *read, FILE *write, size_t bufferLength) {
+  LCByte buffer[bufferLength];
+  while (!feof(read) && !ferror(read)) {
+    size_t lengthRead = fread(buffer, sizeof(LCByte), bufferLength, read);
+    fwrite(buffer, sizeof(LCByte), lengthRead, write);
+  }
+  return 0;
+}
+
+int pipeFileToFunction(void *cookie, FILE *read, writeStreamFun writeFun, size_t bufferLength) {
+  LCByte buffer[bufferLength];
+  while (!feof(read) && !ferror(read)) {
+    size_t lengthRead = fread(buffer, sizeof(LCByte), bufferLength, read);
+    writeFun(cookie, buffer, lengthRead);
+  }
+  return 0; 
+}

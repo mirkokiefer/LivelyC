@@ -9,6 +9,6 @@
 
 void createSHAString(LCByte data[], size_t length, char buffer[HASH_LENGTH]);
 void* createHashContext(LCPipeRef stream);
-void updateHashContext(void* context);
+void updateHashContext(void* context, LCByte data[], size_t length);
 void finalizeHashContext(void* context, char buffer[HASH_LENGTH]);
 #endif

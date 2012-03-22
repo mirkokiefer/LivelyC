@@ -2,12 +2,13 @@
 #include "LCData.h"
 #include "LCPipe.h"
 #include "LCUtils.h"
+#include "LCMemoryStream.h"
 
 typedef struct data* dataRef;
 
 #define READ_BUFFER_SIZE 1024
 
-void dataSerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
+FILE* dataSerialize(LCObjectRef object);
 void* dataDeserialize(LCDataRef data, FILE *fd);
 void dataDealloc(LCObjectRef data);
 
@@ -63,8 +64,9 @@ void dataDealloc(LCObjectRef data) {
   lcFree(dataStruct);
 }
 
-void dataSerialize(LCObjectRef data, void* cookie, callback flush, FILE* fd) {
-  fwrite(LCDataDataRef(data), sizeof(LCByte), LCDataLength(data), fd);
+FILE* dataSerialize(LCObjectRef data) {
+  objectRetain(data);
+  return createMemoryReadStream(data, LCDataDataRef(data), LCDataLength(data), false, objectReleaseAlt);
 }
 
 void* dataDeserialize(LCDataRef data, FILE *fd) {
