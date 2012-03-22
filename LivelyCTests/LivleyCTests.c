@@ -236,9 +236,13 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   LCArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
   objectStore(mArray, context);
   objectDeleteCache(mArray);
+  LCMutableArrayAddObject(mArray, string1);
+  objectStore(mArray, context);
+  objectDeleteCache(mArray);
+  objectCache(mArray);
   LCStringRef *strings1 = LCMutableArrayObjects(mArray);
   mu_assert("mutable array persistence", LCStringEqual(string1, strings1[0]) && LCStringEqual(string2, strings1[1]) &&
-            LCStringEqual(string3, strings1[2]));
+            LCStringEqual(string3, strings1[2]) && LCStringEqual(string1, strings1[3]));
   
   LCKeyValueRef keyValue = LCKeyValueCreate(string1, array);
   objectStore(keyValue, context);
