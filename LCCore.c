@@ -204,7 +204,9 @@ static FILE* objectSerializedFile(LCObjectRef object) {
     return object->type->serializeData(object);
   } else {
     LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
-    objectSerializeWalkingChildren(object, createMemoryWriteStream(data, LCMutableDataAppendAlt, NULL));
+    FILE *fpw = createMemoryWriteStream(data, LCMutableDataAppendAlt, NULL);
+    objectSerializeWalkingChildren(object, fpw);
+    fclose(fpw);
     return createMemoryReadStream(data, LCMutableDataDataRef(data), LCMutableDataLength(data), false, objectReleaseAlt);
   }
 }
