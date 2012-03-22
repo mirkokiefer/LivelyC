@@ -249,6 +249,9 @@ static void deserializeJson(LCObjectRef object, json_value *json) {
       objects[j] = objectCreateFromContext(context, contextStringToType(context, typeString), hash);
     }
     objectStoreChildren(object, key, objects, objectsLength);
+    for (LCInteger j=0; j<objectsLength; j++) {
+      objectRelease(objects[j]);
+    }
   }
 }
 
