@@ -31,8 +31,8 @@ struct LCContext {
 struct LCSerializationCookie {
   FILE *fp;
   LCObjectRef object;
-  LCInteger levels;
   bool first;
+  LCInteger depth;
 };
 
 static char* _objectHash(LCObjectRef object) {
@@ -171,6 +171,13 @@ static void objectWalkChildren(LCObjectRef object, void *cookie, childCallback c
 // todo: depth parameter not considered - should serialize children as composite objects accordingly
 static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
   struct LCSerializationCookie *info = (struct LCSerializationCookie*)cookie;
+  size_t currentDepth;
+  if (info->depth > 0) {
+    currentDepth = info->depth;
+  } else {
+    currentDepth = depth;
+  }
+  
   if (info->first) {
     info->first = false;
   } else {
@@ -181,9 +188,16 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
     if (i>0) {
       fprintf(info->fp, ",");
     }
-    char hash[HASH_LENGTH];
-    objectHash(objects[i], hash);
-    fprintf(info->fp, "\{\"type\": \"%s\", \"hash\": \"%s\"}", typeName(objectType(objects[i])), hash);
+    fprintf(info->fp, "\{\"type\": \"%s\", ", typeName(objectType(objects[i])));
+    if (currentDepth > 0) {
+      fprintf(info->fp, "\"object\": ");
+      objectSerializeToDepth(objects[i], currentDepth-1, info->fp);
+    } else {
+      char hash[HASH_LENGTH];
+      objectHash(objects[i], hash);
+      fprintf(info->fp, "\"hash\": \"%s\"", hash);
+    }
+    fprintf(info->fp, "}");
   }
   fprintf(info->fp, "]");
 }
@@ -192,7 +206,8 @@ static void objectSerializeWalkingChildren(LCObjectRef object, size_t depth, FIL
   struct LCSerializationCookie cookie = {
     .fp = fpw,
     .object = object,
-    .first = true
+    .first = true,
+    .depth = depth
   };
   fprintf(fpw, "{");
   objectWalkChildren(object, &cookie, serializeChildCallback);
