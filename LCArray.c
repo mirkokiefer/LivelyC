@@ -167,7 +167,6 @@ LCCompare arrayCompare(LCObjectRef array1, LCObjectRef array2) {
 }
 
 void arrayDealloc(LCObjectRef object) {
-  arrayDataRef data = objectData(object);
   for (LCInteger i=0; i<LCArrayLength(object); i++) {
     objectRelease(LCArrayObjectAtIndex(object, i));
   }
