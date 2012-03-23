@@ -214,26 +214,15 @@ static void objectSerializeWalkingChildren(LCObjectRef object, size_t depth, FIL
   fprintf(fpw, "}");
 }
 
-static FILE* objectSerializedFileToDepth(LCObjectRef object, LCInteger depth) {
-  if (object->type->serializeData) {
-    return object->type->serializeData(object);
-  } else {
-    LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
-    FILE *fpw = createMemoryWriteStream(data, LCMutableDataAppendAlt, NULL);
-    objectSerializeWalkingChildren(object, depth, fpw);
-    fclose(fpw);
-    return createMemoryReadStream(data, LCMutableDataDataRef(data), LCMutableDataLength(data), false, objectReleaseAlt);
-  }
-}
-
-static FILE* objectSerializedFile(LCObjectRef object) {
-  return objectSerializedFileToDepth(object, 0);
-}
-
 void objectSerializeToDepth(LCObjectRef object, LCInteger depth, FILE *fpw) {
-  if (object->type->serializeData) {
-    FILE *fpr = object->type->serializeData(object);
-    pipeFiles(fpr, fpw, FILE_BUFFER_LENGTH);
+  if (object->type->serializeDataBuffered) {
+    fpos_t offset = 0;
+    while (object->type->serializeDataBuffered(object, offset, FILE_BUFFER_LENGTH, fpw) == FILE_BUFFER_LENGTH) {
+      offset = offset + FILE_BUFFER_LENGTH;
+      fflush(fpw);
+    }
+  } else if (object->type->serializeData) {
+    object->type->serializeData(object, fpw);
   } else {
     objectSerializeWalkingChildren(object, depth, fpw);
   }
@@ -302,12 +291,11 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
 
 void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
   if (!_objectHash(object) || !object->type->immutable) {
-    LCPipeRef memoryStream = LCPipeCreate();
-    void* context = createHashContext(memoryStream);
-    FILE *fp = objectSerializedFile(object);
-    pipeFileToFunction(context, fp, updateHashContext, FILE_BUFFER_LENGTH);
+    void* context = createHashContext();
+    FILE *fp = createMemoryWriteStream(context, updateHashContext, NULL);
+    objectSerialize(object, fp);
+    fclose(fp);
     finalizeHashContext(context, hashBuffer);
-    objectRelease(memoryStream);
   } else {
     strcpy(hashBuffer, _objectHash(object));
   }
