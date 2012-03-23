@@ -188,7 +188,7 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   fprintf(info->fp, "]");
 }
 
-static void objectSerializeWalkingChildren(LCObjectRef object, FILE *fpw) {
+static void objectSerializeWalkingChildren(LCObjectRef object, size_t depth, FILE *fpw) {
   struct LCSerializationCookie cookie = {
     .fp = fpw,
     .object = object,
@@ -199,25 +199,33 @@ static void objectSerializeWalkingChildren(LCObjectRef object, FILE *fpw) {
   fprintf(fpw, "}");
 }
 
-static FILE* objectSerializedFile(LCObjectRef object) {
+static FILE* objectSerializedFileToDepth(LCObjectRef object, LCInteger depth) {
   if (object->type->serializeData) {
     return object->type->serializeData(object);
   } else {
     LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
     FILE *fpw = createMemoryWriteStream(data, LCMutableDataAppendAlt, NULL);
-    objectSerializeWalkingChildren(object, fpw);
+    objectSerializeWalkingChildren(object, depth, fpw);
     fclose(fpw);
     return createMemoryReadStream(data, LCMutableDataDataRef(data), LCMutableDataLength(data), false, objectReleaseAlt);
   }
 }
 
-void objectSerialize(LCObjectRef object, FILE *fpw) {
+static FILE* objectSerializedFile(LCObjectRef object) {
+  return objectSerializedFileToDepth(object, 0);
+}
+
+void objectSerializeToDepth(LCObjectRef object, LCInteger depth, FILE *fpw) {
   if (object->type->serializeData) {
     FILE *fpr = object->type->serializeData(object);
     pipeFiles(fpr, fpw, FILE_BUFFER_LENGTH);
   } else {
-    objectSerializeWalkingChildren(object, fpw);
+    objectSerializeWalkingChildren(object, depth, fpw);
   }
+}
+
+void objectSerialize(LCObjectRef object, FILE *fpw) {
+  objectSerializeToDepth(object, 0, fpw);
 }
 
 static void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {

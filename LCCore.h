@@ -79,6 +79,7 @@ LCInteger objectRetainCount(LCObjectRef object);
 LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
+void objectSerializeToDepth(LCObjectRef object, LCInteger depth, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
 void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]);
