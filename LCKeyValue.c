@@ -42,12 +42,12 @@ void* keyValueInitData() {
   return newKeyValue;
 }
 
-void* LCKeyValueKey(LCKeyValueRef keyValue) {
+LCObjectRef LCKeyValueKey(LCKeyValueRef keyValue) {
   keyValueDataRef keyValueData = objectData(keyValue);
   return keyValueData->key;
 }
 
-void* LCKeyValueValue(LCKeyValueRef keyValue) {
+LCObjectRef LCKeyValueValue(LCKeyValueRef keyValue) {
   keyValueDataRef keyValueData = objectData(keyValue);
   return keyValueData->value;
 }

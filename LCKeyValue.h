@@ -8,7 +8,7 @@ typedef LCObjectRef LCKeyValueRef;
 extern LCTypeRef LCTypeKeyValue;
 
 LCKeyValueRef LCKeyValueCreate(LCObjectRef keyObject, LCObjectRef valueObject);
-void* LCKeyValueKey(LCKeyValueRef keyValue);
-void* LCKeyValueValue(LCKeyValueRef keyValue);
+LCObjectRef LCKeyValueKey(LCKeyValueRef keyValue);
+LCObjectRef LCKeyValueValue(LCKeyValueRef keyValue);
 
 #endif
