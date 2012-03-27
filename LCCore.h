@@ -47,7 +47,6 @@ typedef void(*childCallback) (void *cookie, char *key, LCObjectRef objects[], si
 
 /*
  - a type either implements serialize/deserializeData or walk/storeChildren but never both.
- - the depth parameter in the child callback determines how deep child objects should be rendered as a composite object.
  - serializationFormat decides whether an object can be rendered as a composite or not
  - initData should return any data the object needs to start deserialization
  - dealloc should always release all child objects and free the objects data if possible

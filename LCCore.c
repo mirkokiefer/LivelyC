@@ -176,7 +176,6 @@ static void objectWalkChildren(LCObjectRef object, void *cookie, childCallback c
   }
 }
 
-// todo: depth parameter not considered - should serialize children as composite objects accordingly
 static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite) {
   struct LCSerializationCookie *info = (struct LCSerializationCookie*)cookie;
   if (info->first) {
