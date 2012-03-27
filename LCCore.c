@@ -306,7 +306,7 @@ void objectDeleteCache(LCObjectRef object) {
   }
 }
 
-int objectCompareFun(const void * elem1, const void * elem2) {
+static int objectCompareFun(const void * elem1, const void * elem2) {
   void** object1 = (void**)elem1;
   void** object2 = (void**)elem2;
   LCCompare result = objectCompare(*object1, *object2);
