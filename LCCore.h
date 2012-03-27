@@ -79,6 +79,8 @@ LCInteger objectRetainCount(LCObjectRef object);
 LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
+void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback);
+void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 void objectSerializeAsComposite(LCObjectRef object, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
