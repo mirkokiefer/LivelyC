@@ -7,6 +7,8 @@
 
 #define FILE_BUFFER_LENGTH 1024
 
+void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback);
+void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LCContextRef context);
 
 struct LCObject {
@@ -171,7 +173,7 @@ void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback
 }
 
 static void objectSerializeWalkingChildren(LCObjectRef object, bool composite, FILE *fpw) {
-  objectSerializeJson(object, composite, fpw);
+  objectSerializeJson(object, composite, fpw, objectWalkChildren);
 }
 
 static void objectSerializeWithCompositeParam(LCObjectRef object, bool composite, FILE *fpw) {
@@ -215,7 +217,7 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
     LCMutableDataAppend(data, (LCByte*)"\0", 1);
     char *jsonString = (char*)LCMutableDataDataRef(data);
     json_value *json = json_parse(jsonString);
-    objectDeserializeJson(object, json);
+    objectDeserializeJson(object, json, objectStoreChildren);
     objectRelease(data);
   }
 }

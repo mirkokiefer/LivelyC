@@ -4,7 +4,7 @@
 
 #include "LCCore.h"
 
-void objectSerializeJson(LCObjectRef object, bool composite, FILE *fp);
-void objectDeserializeJson(LCObjectRef object, json_value *json);
+void objectSerializeJson(LCObjectRef object, bool composite, FILE *fp, walkChildren walkFun);
+void objectDeserializeJson(LCObjectRef object, json_value *json, storeChildren storeFun);
 
 #endif

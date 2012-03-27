@@ -45,6 +45,9 @@ typedef FILE*(*readData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 typedef void (*callback)(void *cookie);
 typedef void(*childCallback) (void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite);
 
+typedef void (*walkChildren)(LCObjectRef object, void *cookie, childCallback cb);
+typedef void (*storeChildren)(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
+
 /*
  - a type either implements serialize/deserializeData or walk/storeChildren but never both.
  - serializationFormat decides whether an object can be rendered as a composite or not
@@ -61,8 +64,8 @@ struct LCType {
   void (*serializeData)(LCObjectRef object, FILE *fd);
   void* (*deserializeData)(LCObjectRef object, FILE *fd);
   void* (*initData)();
-  void (*walkChildren)(LCObjectRef object, void *cookie, childCallback cb);
-  void (*storeChildren)(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
+  walkChildren walkChildren;
+  storeChildren storeChildren;
   void *meta;
 };
 
@@ -79,8 +82,6 @@ LCInteger objectRetainCount(LCObjectRef object);
 LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
-void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback);
-void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 void objectSerializeAsComposite(LCObjectRef object, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);

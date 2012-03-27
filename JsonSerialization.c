@@ -35,7 +35,7 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   fprintf(info->fp, "]");
 }
 
-void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw) {
+void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw, walkChildren walkFun) {
   struct LCSerializationCookie cookie = {
     .fp = fpw,
     .object = object,
@@ -43,11 +43,11 @@ void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw) {
     .composite = composite
   };
   fprintf(fpw, "{");
-  objectWalkChildren(object, &cookie, serializeChildCallback);
+  walkFun(object, &cookie, serializeChildCallback);
   fprintf(fpw, "}");
 }
 
-void objectDeserializeJson(LCObjectRef object, json_value *json) {
+void objectDeserializeJson(LCObjectRef object, json_value *json, storeChildren storeFun) {
   LCContextRef context = objectContext(object);
   for (LCInteger i=0; i<json->u.object.length; i++) {
     char *key = json->u.object.values[i].name;
@@ -84,11 +84,11 @@ void objectDeserializeJson(LCObjectRef object, json_value *json) {
           sprintf(dataStringJson, "\"%s\"", dataString);
           objectDeserialize(objects[j], createMemoryReadStream(NULL, (LCByte*)dataStringJson, dataStringLength+2, false, NULL));
         } else {
-          objectDeserializeJson(objects[j], embeddedObject);
+          objectDeserializeJson(objects[j], embeddedObject, storeFun);
         }
       }
     }
-    objectStoreChildren(object, key, objects, objectsLength);
+    storeFun(object, key, objects, objectsLength);
     for (LCInteger j=0; j<objectsLength; j++) {
       objectRelease(objects[j]);
     }
