@@ -233,6 +233,12 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   mu_assert("array persistence", LCStringEqual(string1, strings[0]) && LCStringEqual(string2, strings[1]) &&
             LCStringEqual(string3, strings[2]));
   
+  LCKeyValueRef keyValue = LCKeyValueCreate(string1, array);
+  objectStore(keyValue, context);
+  objectDeleteCache(keyValue);
+  objectCache(keyValue);
+  mu_assert("keyValue persistence", LCStringEqual(LCKeyValueKey(keyValue), string1));
+  
   LCArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
   objectStore(mArray, context);
   objectDeleteCache(mArray);
@@ -244,11 +250,13 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   mu_assert("mutable array persistence", LCStringEqual(string1, strings1[0]) && LCStringEqual(string2, strings1[1]) &&
             LCStringEqual(string3, strings1[2]) && LCStringEqual(string1, strings1[3]));
   
-  LCKeyValueRef keyValue = LCKeyValueCreate(string1, array);
-  objectStore(keyValue, context);
-  objectDeleteCache(keyValue);
-  objectCache(keyValue);
-  mu_assert("keyValue persistence", LCStringEqual(LCKeyValueKey(keyValue), string1));
+  LCMutableArrayAddObject(mArray, LCStringCreate("test1"));
+  objectStoreAsComposite(mArray, context);
+  objectDeleteCache(mArray);
+  LCStringRef *strings2 = LCMutableArrayObjects(mArray);
+  mu_assert("composite persistence", LCStringEqual(string1, strings2[0]) && LCStringEqual(string2, strings2[1]) &&
+            LCStringEqual(string3, strings2[2]) && LCStringEqual(string1, strings2[3]));
+
   return 0;
 }
 
@@ -265,7 +273,7 @@ static char* test_object_persistence() {
   LCFileStoreRef fileStore = LCFileStoreCreate(LCStringChars(testPath));
   
   char *fileTest = test_object_persistence_with_store(LCFileStoreStoreObject(fileStore), "file");
-  deleteDirectory(LCStringChars(testPath));
+  //deleteDirectory(LCStringChars(testPath));
   return fileTest;
 }
 

@@ -6,6 +6,8 @@
 
 #define FILE_BUFFER_LENGTH 1024
 
+static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LCContextRef context);
+
 struct LCObject {
   LCTypeRef type;
   LCInteger rCount;
@@ -32,7 +34,7 @@ struct LCSerializationCookie {
   FILE *fp;
   LCObjectRef object;
   bool first;
-  LCInteger depth;
+  bool composite;
 };
 
 static char* _objectHash(LCObjectRef object) {
@@ -40,6 +42,12 @@ static char* _objectHash(LCObjectRef object) {
 }
 
 static void _objectSetHash(LCObjectRef object, char hash[HASH_LENGTH]) {
+  if (!hash) {
+    if (object->hash) {
+      lcFree(object->hash);
+      object->hash = NULL;
+    }
+  }
   if (!object->hash) {
     object->hash = malloc(sizeof(char)*HASH_LENGTH);
   }
@@ -169,15 +177,8 @@ static void objectWalkChildren(LCObjectRef object, void *cookie, childCallback c
 }
 
 // todo: depth parameter not considered - should serialize children as composite objects accordingly
-static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
+static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite) {
   struct LCSerializationCookie *info = (struct LCSerializationCookie*)cookie;
-  size_t currentDepth;
-  if (info->depth > 0) {
-    currentDepth = info->depth;
-  } else {
-    currentDepth = depth;
-  }
-  
   if (info->first) {
     info->first = false;
   } else {
@@ -189,9 +190,9 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
       fprintf(info->fp, ",");
     }
     fprintf(info->fp, "\{\"type\": \"%s\", ", typeName(objectType(objects[i])));
-    if (currentDepth > 0) {
+    if (info->composite) {
       fprintf(info->fp, "\"object\": ");
-      objectSerializeToDepth(objects[i], currentDepth-1, info->fp);
+      objectSerializeAsComposite(objects[i], info->fp);
     } else {
       char hash[HASH_LENGTH];
       objectHash(objects[i], hash);
@@ -202,19 +203,19 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   fprintf(info->fp, "]");
 }
 
-static void objectSerializeWalkingChildren(LCObjectRef object, size_t depth, FILE *fpw) {
+static void objectSerializeWalkingChildren(LCObjectRef object, bool composite, FILE *fpw) {
   struct LCSerializationCookie cookie = {
     .fp = fpw,
     .object = object,
     .first = true,
-    .depth = depth
+    .composite = composite
   };
   fprintf(fpw, "{");
   objectWalkChildren(object, &cookie, serializeChildCallback);
   fprintf(fpw, "}");
 }
 
-void objectSerializeToDepth(LCObjectRef object, LCInteger depth, FILE *fpw) {
+static void objectSerializeWithCompositeParam(LCObjectRef object, bool composite, FILE *fpw) {
   if (object->type->serializeDataBuffered) {
     fpos_t offset = 0;
     while (object->type->serializeDataBuffered(object, offset, FILE_BUFFER_LENGTH, fpw) == FILE_BUFFER_LENGTH) {
@@ -224,12 +225,16 @@ void objectSerializeToDepth(LCObjectRef object, LCInteger depth, FILE *fpw) {
   } else if (object->type->serializeData) {
     object->type->serializeData(object, fpw);
   } else {
-    objectSerializeWalkingChildren(object, depth, fpw);
+    objectSerializeWalkingChildren(object, composite, fpw);
   }
 }
 
+void objectSerializeAsComposite(LCObjectRef object, FILE *fpw) {
+  objectSerializeWithCompositeParam(object, true, fpw);
+}
+
 void objectSerialize(LCObjectRef object, FILE *fpw) {
-  objectSerializeToDepth(object, 0, fpw);
+  objectSerializeWithCompositeParam(object, false, fpw);
 }
 
 static void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
@@ -237,6 +242,7 @@ static void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objec
 }
 
 static void deserializeJson(LCObjectRef object, json_value *json) {
+  LCContextRef context = objectContext(object);
   for (LCInteger i=0; i<json->u.object.length; i++) {
     char *key = json->u.object.values[i].name;
     json_value *value = json->u.object.values[i].value;
@@ -248,19 +254,33 @@ static void deserializeJson(LCObjectRef object, json_value *json) {
     for (LCInteger j=0; j<objectsLength; j++) {
       json_value *objectInfo = objectsInfo[j];
       char *typeString;
-      char *hash;
+      char *hash = NULL;
+      json_value *embeddedObject = NULL;
       for (LCInteger k=0; k<objectInfo->u.object.length; k++) {
         char* objectInfoKey = objectInfo->u.object.values[k].name;
         json_value *objectInfoValue = objectInfo->u.object.values[k].value;
         if (strcmp(objectInfoKey, "type")==0) {
           typeString = objectInfoValue->u.string.ptr;
-        } else
-          if (strcmp(objectInfoKey, "hash")==0) {
-            hash = objectInfoValue->u.string.ptr;
-          }
+        } else if(strcmp(objectInfoKey, "hash")==0) {
+          hash = objectInfoValue->u.string.ptr;
+        } else if (strcmp(objectInfoKey, "object")==0) {
+          embeddedObject = objectInfoValue;
+        }
       }
-      LCContextRef context = objectContext(object);
-      objects[j] = objectCreateFromContext(context, contextStringToType(context, typeString), hash);
+      if (hash) {
+        objects[j] = objectCreateFromContext(context, contextStringToType(context, typeString), hash);
+      } else if(embeddedObject) {
+        objects[j] = objectCreate(contextStringToType(context, typeString), NULL);
+        if (typeBinarySerialized(objectType(objects[j]))) {
+          char *dataString = embeddedObject->u.string.ptr;
+          size_t dataStringLength = embeddedObject->u.string.length;
+          char dataStringJson[dataStringLength+2];
+          sprintf(dataStringJson, "\"%s\"", dataString);
+          objectDeserialize(objects[j], createMemoryReadStream(NULL, (LCByte*)dataStringJson, dataStringLength+2, false, NULL));
+        } else {
+          deserializeJson(objects[j], embeddedObject);
+        }
+      }
     }
     objectStoreChildren(object, key, objects, objectsLength);
     for (LCInteger j=0; j<objectsLength; j++) {
@@ -304,14 +324,16 @@ void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
   }
 }
 
-static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth) {
+static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite) {
   LCObjectRef parent = (LCObjectRef)cookie;
   for (LCInteger i=0; i<length; i++) {
-    objectStore(objects[i], objectContext(parent));
+    if (!composite) {
+      objectStore(objects[i], objectContext(parent));
+    }
   }
 }
 
-void objectStore(LCObjectRef object, LCContextRef context) {
+static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LCContextRef context) {
   char hash[HASH_LENGTH];
   hash[0] = '\0';
   if (!object->type->immutable && object->persisted) {
@@ -326,14 +348,26 @@ void objectStore(LCObjectRef object, LCContextRef context) {
     }
     FILE* fp = context->store->writefn(context->store->cookie, objectType(object), hash);
     object->context = context;
-    objectSerialize(object, fp);
-    objectWalkChildren(object, object, storeChildCallback);
+    if (composite) {
+      objectSerializeAsComposite(object, fp);
+    } else {
+      objectSerialize(object, fp);
+      objectWalkChildren(object, object, storeChildCallback);
+    }
     object->persisted = true;
     fclose(fp);
     if (!object->type->immutable) {
       _objectSetHash(object, hash);
     }
   }
+}
+
+void objectStore(LCObjectRef object, LCContextRef context) {
+  objectStoreWithCompositeParam(object, false, context);
+}
+
+void objectStoreAsComposite(LCObjectRef object, LCContextRef context) {
+  objectStoreWithCompositeParam(object, true, context);
 }
 
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context) {
@@ -390,6 +424,14 @@ bool typeImmutable(LCTypeRef type) {
 
 LCFormat typeSerializationFormat(LCTypeRef type) {
   return type->serializationFormat;
+}
+
+bool typeBinarySerialized(LCTypeRef type) {
+  if (type->serializeData || type->serializeDataBuffered) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, readData readfn) {

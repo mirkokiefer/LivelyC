@@ -43,7 +43,7 @@ typedef void(*deleteData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 typedef FILE*(*readData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 
 typedef void (*callback)(void *cookie);
-typedef void(*childCallback) (void *cookie, char *key, LCObjectRef objects[], size_t length, LCInteger depth);
+typedef void(*childCallback) (void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite);
 
 /*
  - a type either implements serialize/deserializeData or walk/storeChildren but never both.
@@ -80,11 +80,12 @@ LCInteger objectRetainCount(LCObjectRef object);
 LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
 void objectSetContext(LCObjectRef object, LCContextRef context);
-void objectSerializeToDepth(LCObjectRef object, LCInteger depth, FILE *fpw);
+void objectSerializeAsComposite(LCObjectRef object, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
 void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]);
 void objectStore(LCObjectRef object, LCContextRef context);
+void objectStoreAsComposite(LCObjectRef object, LCContextRef context);
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);
 void objectCache(LCObjectRef object);
 void objectDeleteCache(LCObjectRef object);
@@ -93,6 +94,7 @@ void objectsSort(LCObjectRef objects[], size_t length);
 char* typeName(LCTypeRef type);
 bool typeImmutable(LCTypeRef type);
 LCFormat typeSerializationFormat(LCTypeRef type);
+bool typeBinarySerialized(LCTypeRef type);
 
 LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, readData readfn);
 LCContextRef contextCreate(LCStoreRef store, stringToType translateFuns[], size_t length);

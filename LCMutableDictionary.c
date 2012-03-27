@@ -171,7 +171,7 @@ void mutableDictionaryDealloc(LCObjectRef object) {
 }
 
 void mutableDictionaryWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
-  cb(cookie, "entries", LCMutableDictionaryEntries(object), LCMutableDictionaryLength(object), 0);
+  cb(cookie, "entries", LCMutableDictionaryEntries(object), LCMutableDictionaryLength(object), false);
 }
 
 void mutableDictionaryStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {

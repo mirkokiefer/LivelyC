@@ -66,8 +66,8 @@ void keyValueDealloc(LCObjectRef object) {
 void keyValueWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
   LCObjectRef key = LCKeyValueKey(object);
   LCObjectRef value = LCKeyValueValue(object);
-  cb(cookie, "key", &key, 1, 0);
-  cb(cookie, "value", &value, 1, 0);
+  cb(cookie, "key", &key, 1, false);
+  cb(cookie, "value", &value, 1, false);
 }
 
 void keyValueStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {

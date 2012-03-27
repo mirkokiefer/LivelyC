@@ -174,7 +174,7 @@ void arrayDealloc(LCObjectRef object) {
 }
 
 void arrayWalkChildren(LCObjectRef object, void *cookie, childCallback cb) {
-  cb(cookie, "objects", LCArrayObjects(object), LCArrayLength(object), 0);
+  cb(cookie, "objects", LCArrayObjects(object), LCArrayLength(object), false);
 }
 
 void arrayStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
