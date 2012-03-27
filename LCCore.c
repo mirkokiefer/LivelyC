@@ -323,6 +323,14 @@ void objectsSort(LCObjectRef objects[], size_t length) {
   qsort(objects, length, sizeof(void*), objectCompareFun);
 }
 
+bool objectHashEqual(LCObjectRef object1, LCObjectRef object2) {
+  char hash1[HASH_LENGTH];
+  char hash2[HASH_LENGTH];
+  objectHash(object1, hash1);
+  objectHash(object2, hash2);
+  return strcmp(hash1, hash2)==0;
+}
+
 char* typeName(LCTypeRef type) {
   if (type->name) {
     return type->name;

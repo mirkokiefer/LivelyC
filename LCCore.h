@@ -92,7 +92,7 @@ void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);
 void objectCache(LCObjectRef object);
 void objectDeleteCache(LCObjectRef object);
 void objectsSort(LCObjectRef objects[], size_t length);
-
+bool objectHashEqual(LCObjectRef object1, LCObjectRef object2);
 char* typeName(LCTypeRef type);
 bool typeImmutable(LCTypeRef type);
 LCFormat typeSerializationFormat(LCTypeRef type);
