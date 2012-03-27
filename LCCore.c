@@ -45,8 +45,8 @@ static void _objectSetHash(LCObjectRef object, char hash[HASH_LENGTH]) {
   if (!hash) {
     if (object->hash) {
       lcFree(object->hash);
-      object->hash = NULL;
     }
+    object->hash = NULL;
   }
   if (!object->hash) {
     object->hash = malloc(sizeof(char)*HASH_LENGTH);
