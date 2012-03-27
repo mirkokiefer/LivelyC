@@ -7,7 +7,7 @@ void keyValueDealloc(LCObjectRef object);
 LCCompare keyValueCompare(LCObjectRef object1, LCObjectRef object2);
 void keyValueWalkChildren(LCObjectRef object, void *cookie, childCallback cb);
 void keyValueStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
-void* keyValueInitData();
+static void* keyValueInitData();
 
 struct keyValueData {
   LCObjectRef key;
@@ -33,7 +33,7 @@ LCKeyValueRef LCKeyValueCreate(LCObjectRef key, LCObjectRef value) {
   return objectCreate(LCTypeKeyValue, newKeyValue);
 };
 
-void* keyValueInitData() {
+static void* keyValueInitData() {
   keyValueDataRef newKeyValue = malloc(sizeof(struct keyValueData));
   if (newKeyValue) {
     newKeyValue->key = NULL;

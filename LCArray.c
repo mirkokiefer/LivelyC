@@ -7,7 +7,7 @@ LCCompare arrayCompare(LCObjectRef object1, LCObjectRef object2);
 void arrayDealloc(LCObjectRef object);
 void arrayWalkChildren(LCObjectRef object, void *cookie, childCallback cb);
 void arrayStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
-void* arrayInitData();
+static void* arrayInitData();
 
 bool resizeBuffer(arrayDataRef array, size_t size);
 void mutableArraySerialize(LCObjectRef object, void* cookie, callback flush, FILE* fd);
@@ -43,7 +43,7 @@ struct LCType typeMutableArray = {
 LCTypeRef LCTypeArray = &typeArray;
 LCTypeRef LCTypeMutableArray = &typeMutableArray;
 
-void* arrayInitData() {
+static void* arrayInitData() {
   arrayDataRef newArray = malloc(sizeof(struct arrayData));
   if (newArray) {
     newArray->length = 0;

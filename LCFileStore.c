@@ -7,7 +7,7 @@ FILE* fileStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 void fileStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 FILE* fileStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
 void fileStoreDealloc(LCObjectRef store);
-void* fileStoreInitData();
+static void* fileStoreInitData();
 LCStringRef createDirectoryPath(LCFileStoreRef store, LCTypeRef type);
 LCStringRef createFilePath(LCFileStoreRef store, LCTypeRef type, char *hash);
 
@@ -24,7 +24,7 @@ struct LCType typeFileStore = {
 
 LCTypeRef LCTypeFileStore = &typeFileStore;
 
-void* fileStoreInitData() {
+static void* fileStoreInitData() {
   fileStoreDataRef data = malloc(sizeof(struct fileStoreData));
   if (data) {
     data->location = NULL;
