@@ -107,6 +107,12 @@ static char* test_array() {
   mu_assert("LCArrayCreateSubArray is correct",
             (LCArrayObjectAtIndex(subArray1, 0)==string2) && (LCArrayObjectAtIndex(subArray1, 1)==string3));
   
+  LCArrayRef arrayAppend = LCArrayCreateAppendingObjects(array, stringArray, 3);
+  LCObjectRef* arrayAppendObjs = LCArrayObjects(arrayAppend);
+  mu_assert("LCArrayCreateAppendingObjects", (arrayAppendObjs[3] == string1) && (arrayAppendObjs[4] == string2) &&
+            (arrayAppendObjs[5] == string3));
+  
+  
   LCMutableArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
   mu_assert("LCMutableArrayCreate",
             (LCMutableArrayObjectAtIndex(mArray, 0)==string1) &&
@@ -148,7 +154,7 @@ static char* test_array() {
   objectHash(string1, string1Hash);
   mu_assert("LCArrayCreateArrayWithMap",
             LCStringEqualCString(LCArrayObjectAtIndex(mappedArray, 0), string1Hash));
-    
+  
   return 0;
 }
 

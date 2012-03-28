@@ -83,15 +83,17 @@ LCArrayRef LCArrayCreateAppendingObjects(LCArrayRef object, LCObjectRef objects[
   }
   arrayDataRef array = objectData(object);
   size_t totalLength = array->length + length;
-  arrayDataRef newArray = malloc(sizeof(struct arrayData) + totalLength * sizeof(LCObjectRef));
-  if(newArray) {
-    newArray->length = totalLength;
-    memcpy(newArray->objects, array->objects, array->length * sizeof(LCObjectRef));
-    memcpy(&(newArray->objects[array->length]), objects, length * sizeof(LCObjectRef));
+  LCObjectRef* newObjects = malloc(totalLength * sizeof(LCObjectRef));
+  if(newObjects) {
+    memcpy(newObjects, array->objects, array->length * sizeof(LCObjectRef));
+    memcpy(&(newObjects[array->length]), objects, length * sizeof(LCObjectRef));
+    arrayDataRef data = arrayInitData();
+    data->objects = newObjects;
+    data->length = totalLength;
     for (LCInteger i=0; i<totalLength; i++) {
-      objectRetain(newArray->objects[i]);
+      objectRetain(newObjects[i]);
     }
-    return objectCreate(LCTypeArray, newArray);
+    return objectCreate(LCTypeArray, data);
   } else {
     return NULL;
   }
@@ -103,8 +105,10 @@ LCArrayRef LCArrayCreateFromArrays(LCArrayRef arrays[], size_t length) {
     totalLength = totalLength + LCArrayLength(arrays[i]);
   }
   
-  arrayDataRef newArray = malloc(sizeof(struct arrayData) + totalLength * sizeof(LCObjectRef));
-  if (newArray) {
+  LCObjectRef* newObjects = malloc(totalLength * sizeof(LCObjectRef));
+  if (newObjects) {
+    arrayDataRef newArray = arrayInitData();
+    newArray->objects = newObjects;
     newArray->length = totalLength;
     size_t copyPos = 0;
     for (LCInteger i=0; i<length; i++) {
