@@ -108,7 +108,9 @@ bool objectsImmutable(LCObjectRef objects[], size_t length) {
 }
 
 LCObjectRef objectRetain(LCObjectRef object) {
-  object->rCount = object->rCount + 1;
+  if (object) {
+    object->rCount = object->rCount + 1;
+  }
   return object;
 }
 
