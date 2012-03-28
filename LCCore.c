@@ -126,11 +126,13 @@ static void objectDataDealloc(LCObjectRef object) {
 }
 
 LCObjectRef objectRelease(LCObjectRef object) {
-  object->rCount = object->rCount - 1;
-  if (object->rCount == 0) {
-    objectDataDealloc(object);
-    lcFree(object);
-    return NULL;
+  if (object) {
+    object->rCount = object->rCount - 1;
+    if (object->rCount == 0) {
+      objectDataDealloc(object);
+      lcFree(object);
+      return NULL;
+    }
   }
   return object;
 }
