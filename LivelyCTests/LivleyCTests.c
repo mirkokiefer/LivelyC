@@ -197,9 +197,10 @@ static char* test_data() {
   char* aCString = "123456";
   
   LCDataRef aData = LCDataCreate((LCByte*)aCString, strlen(aCString)+1);
+  size_t length = LCDataLength(aData);
   LCByte* dataFromLCData = LCDataDataRef(aData);
   
-  mu_assert("LCData stores data correctly", strcmp(aCString, (char*)dataFromLCData)==0);
+  mu_assert("LCData stores data correctly", strcmp(aCString, (char*)dataFromLCData)==0 && length == strlen(aCString)+1);
   
   LCMutableDataRef mData = LCMutableDataCreate((LCByte*)aCString, strlen(aCString));
   char *string2 = "78910";

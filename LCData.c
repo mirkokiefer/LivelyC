@@ -43,6 +43,7 @@ LCDataRef LCDataCreate(LCByte data[], size_t length) {
     memcpy(dataBuffer, data, length*sizeof(LCByte));
     dataRef newData = dataCreateStruct();
     newData->data = dataBuffer;
+    newData->length = length;
     return objectCreate(LCTypeData, newData);
   } else {
     return NULL;
