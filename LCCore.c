@@ -263,7 +263,7 @@ static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LC
     if (hash[0] == '\0') {
       objectHash(object, hash);
     }
-    FILE* fp = context->store->writefn(context->store->cookie, objectType(object), hash);
+    FILE* fp = storeWriteData(context->store, objectType(object), hash);
     object->context = context;
     if (composite) {
       objectSerializeAsComposite(object, fp);
@@ -297,7 +297,7 @@ void objectCache(LCObjectRef object) {
   if (!object->data) {
     LCContextRef context = objectContext(object);
     if (context) {
-      FILE* fp = context->store->readfn(context->store->cookie, objectType(object), _objectHash(object));
+      FILE* fp = storeReadData(context->store, objectType(object), _objectHash(object));
       objectDeserialize(object, fp);
       fclose(fp);
     }
@@ -368,6 +368,28 @@ LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, rea
     store->readfn = readfn;
   }
   return store;
+}
+
+bool storeFileExists(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]) {
+  FILE *fp = storeReadData(store, type, hash);
+  if (fp) {
+    fclose(fp);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+FILE* storeWriteData(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]) {
+  return store->writefn(store->cookie, type, hash);
+}
+
+void storeDeleteData(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]) {
+  return store->deletefn(store->cookie, type, hash);
+}
+
+FILE* storeReadData(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]) {
+  return store->readfn(store->cookie, type, hash);
 }
 
 LCContextRef contextCreate(LCStoreRef store, stringToType funs[], size_t length) {

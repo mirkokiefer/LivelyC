@@ -99,6 +99,11 @@ LCFormat typeSerializationFormat(LCTypeRef type);
 bool typeBinarySerialized(LCTypeRef type);
 
 LCStoreRef storeCreate(void *cookie, writeData writefn, deleteData deletefn, readData readfn);
+bool storeFileExists(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]);
+FILE* storeWriteData(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]);
+void storeDeleteData(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]);
+FILE* storeReadData(LCStoreRef store, LCTypeRef type, char hash[HASH_LENGTH]);
+
 LCContextRef contextCreate(LCStoreRef store, stringToType translateFuns[], size_t length);
 LCTypeRef contextStringToType(LCContextRef context, char* typeString);
 
