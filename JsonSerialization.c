@@ -18,6 +18,9 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   }
   fprintf(info->fp, "\"%s\": [", key);
   for (LCInteger i=0; i<length; i++) {
+    if (objects[i] == NULL) {
+      continue;
+    }
     if (i>0) {
       fprintf(info->fp, ",");
     }
