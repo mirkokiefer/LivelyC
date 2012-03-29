@@ -159,7 +159,12 @@ LCArrayRef LCArrayCreateArrayWithMap(LCArrayRef array, void* info, LCCreateEachC
   for (LCInteger i=0; i<arrayLength; i++) {
     newObjects[i] = each(i, info, arrayObjects[i]);
   }
-  LCArrayRef newArray = LCArrayCreate(newObjects, arrayLength);
+  LCArrayRef newArray;
+  if (objectType(array)==LCTypeArray) {
+    newArray = LCArrayCreate(newObjects, arrayLength);
+  } else {
+    newArray = LCMutableArrayCreate(newObjects, arrayLength);
+  }
   for (LCInteger i=0; i<arrayLength; i++) {
     objectRelease(newObjects[i]);
   }
