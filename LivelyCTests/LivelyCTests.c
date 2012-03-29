@@ -81,6 +81,9 @@ static char* test_string() {
   char *stringArr[] = {aCString, anIdenticalCString};
   LCStringRef concat = LCStringCreateFromStringArray(stringArr, 2);
   mu_assert("LCStringCreateFromStringArray", LCStringEqualCString(concat, "abcdabcd"));
+  
+  LCStringRef concatDelim = LCStringCreateFromStringArrayWithDelim(stringArr, 2, "/");
+  mu_assert("LCStringCreateFromStringArrayWithDelim", LCStringEqualCString(concatDelim, "abcd/abcd"));
   return 0;
 }
 

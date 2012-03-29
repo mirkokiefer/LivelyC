@@ -41,25 +41,39 @@ LCStringRef LCStringCreateFromChars(char* characters, size_t length) {
   return LCStringCreate(string);
 }
 
-LCStringRef LCStringCreateFromStrings(LCStringRef strings[], size_t length) {
+LCStringRef LCStringCreateFromStringsWithDelim(LCStringRef strings[], size_t length, char *delimiter) {
   char *stringArray[length];
   for (LCInteger i=0; i<length; i++) {
     stringArray[i] = LCStringChars(strings[i]);
   }
-  return LCStringCreateFromStringArray(stringArray, length);
+  return LCStringCreateFromStringArrayWithDelim(stringArray, length, delimiter);
 }
 
-LCStringRef LCStringCreateFromStringArray(char* strings[], size_t length) {
+LCStringRef LCStringCreateFromStrings(LCStringRef strings[], size_t length) {
+  return LCStringCreateFromStringsWithDelim(strings, length, NULL);
+}
+
+LCStringRef LCStringCreateFromStringArrayWithDelim(char* strings[], size_t length, char *delimiter) {
   size_t totalLength = 1;
   for (LCInteger i=0; i<length; i++) {
     totalLength = totalLength + strlen(strings[i]);
   }
+  if (delimiter) {
+    totalLength = totalLength + (length-1)*strlen(delimiter);
+  }
   char buffer[totalLength];
   buffer[0]='\0';
   for (LCInteger i=0; i<length; i++) {
+    if (i>0 && delimiter) {
+      strcat(buffer, delimiter);
+    }
     strcat(buffer, strings[i]);
   }
   return LCStringCreate(buffer);
+}
+
+LCStringRef LCStringCreateFromStringArray(char* strings[], size_t length) {
+  return LCStringCreateFromStringArrayWithDelim(strings, length, NULL);
 }
 
 LCStringRef LCStringCreateFromData(LCDataRef data) {
