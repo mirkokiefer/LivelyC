@@ -226,7 +226,7 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   char* string = "abcdef";
   LCStringRef test = LCStringCreate(string);
   objectStore(test, context);
-  objectDeleteCache(test);
+  objectDeleteCache(test, context);
   mu_assert("string persistence", LCStringEqualCString(test, string));
   
   LCStringRef string1 = LCStringCreate("abc");
@@ -235,23 +235,23 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   LCStringRef stringArray[] = {string1, string2, string3};
   LCArrayRef array = LCArrayCreate(stringArray, 3);
   objectStore(array, context);
-  objectDeleteCache(array);
+  objectDeleteCache(array, context);
   LCStringRef *strings = LCArrayObjects(array);
   mu_assert("array persistence", LCStringEqual(string1, strings[0]) && LCStringEqual(string2, strings[1]) &&
             LCStringEqual(string3, strings[2]));
   
   LCKeyValueRef keyValue = LCKeyValueCreate(string1, array);
   objectStore(keyValue, context);
-  objectDeleteCache(keyValue);
+  objectDeleteCache(keyValue, context);
   objectCache(keyValue);
   mu_assert("keyValue persistence", LCStringEqual(LCKeyValueKey(keyValue), string1));
   
   LCArrayRef mArray = LCMutableArrayCreate(stringArray, 3);
   objectStore(mArray, context);
-  objectDeleteCache(mArray);
+  objectDeleteCache(mArray, context);
   LCMutableArrayAddObject(mArray, string1);
   objectStore(mArray, context);
-  objectDeleteCache(mArray);
+  objectDeleteCache(mArray, context);
   objectCache(mArray);
   LCStringRef *strings1 = LCMutableArrayObjects(mArray);
   mu_assert("mutable array persistence", LCStringEqual(string1, strings1[0]) && LCStringEqual(string2, strings1[1]) &&
@@ -259,7 +259,7 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   
   LCMutableArrayAddObject(mArray, LCStringCreate("test1"));
   objectStoreAsComposite(mArray, context);
-  objectDeleteCache(mArray);
+  objectDeleteCache(mArray, context);
   LCStringRef *strings2 = LCMutableArrayObjects(mArray);
   mu_assert("composite persistence", LCStringEqual(string1, strings2[0]) && LCStringEqual(string2, strings2[1]) &&
             LCStringEqual(string3, strings2[2]) && LCStringEqual(string1, strings2[3]));

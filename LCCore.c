@@ -231,16 +231,15 @@ void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
 }
 
 static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite) {
-  LCObjectRef parent = (LCObjectRef)cookie;
+  LCContextRef context = (LCContextRef)cookie;
   for (LCInteger i=0; i<length; i++) {
     if (!composite) {
-      objectStore(objects[i], objectContext(parent));
+      objectStore(objects[i], context);
     }
   }
 }
 
 static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LCContextRef context) {
-  object->context = context;
   char hash[HASH_LENGTH];
   objectHash(object, hash);
   if (!object->type->immutable) {
@@ -254,7 +253,7 @@ static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LC
     objectSerializeAsComposite(object, fp);
   } else {
     objectSerialize(object, fp);
-    objectWalkChildren(object, object, storeChildCallback);
+    objectWalkChildren(object, context, storeChildCallback);
   }
   fclose(fp);
 }
@@ -284,8 +283,9 @@ void objectCache(LCObjectRef object) {
   }
 }
 
-void objectDeleteCache(LCObjectRef object) {
-  if (storeFileExists(objectContext(object)->store, objectType(object), _objectHash(object))) {
+void objectDeleteCache(LCObjectRef object, LCContextRef context) {
+  if (storeFileExists(context->store, objectType(object), _objectHash(object))) {
+    object->context = context;
     objectDataDealloc(object);
   }
 }
