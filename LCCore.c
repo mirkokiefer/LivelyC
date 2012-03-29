@@ -15,7 +15,6 @@ struct LCObject {
   LCTypeRef type;
   LCInteger rCount;
   LCContextRef context;
-  bool persisted;
   char *hash;
   void *data;
 };
@@ -50,21 +49,12 @@ static void _objectSetHash(LCObjectRef object, char hash[HASH_LENGTH]) {
   strcpy(object->hash, hash);
 }
 
-static bool _objectPersisted(LCObjectRef object) {
-  return object->persisted;
-}
-
-static void _objectSetPersisted(LCObjectRef object, bool persisted) {
-  object->persisted = persisted;
-}
-
 LCObjectRef objectCreate(LCTypeRef type, void* data) {
   LCObjectRef object = malloc(sizeof(struct LCObject));
   if (object) {
     object->rCount = 1;
     object->type = type;
     object->data = data;
-    object->persisted = false;
     object->context = NULL;
     object->hash = NULL;
   }
@@ -75,7 +65,6 @@ char *LCUnnamedObject = "LCUnnamedObject";
 
 LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]) {
   LCObjectRef object = objectCreate(type, NULL);
-  object->persisted = true;
   object->context = context;
   if (hash) {
     _objectSetHash(object, hash);
@@ -251,32 +240,23 @@ static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], s
 }
 
 static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LCContextRef context) {
+  object->context = context;
   char hash[HASH_LENGTH];
-  hash[0] = '\0';
-  if (!object->type->immutable && object->persisted) {
-    objectHash(object, hash);
-    if (strcmp(hash, _objectHash(object)) != 0) {
-      object->persisted = false;
-    }
+  objectHash(object, hash);
+  if (!object->type->immutable) {
+    _objectSetHash(object, hash);
   }
-  if (!object->persisted) {
-    if (hash[0] == '\0') {
-      objectHash(object, hash);
-    }
-    FILE* fp = storeWriteData(context->store, objectType(object), hash);
-    object->context = context;
-    if (composite) {
-      objectSerializeAsComposite(object, fp);
-    } else {
-      objectSerialize(object, fp);
-      objectWalkChildren(object, object, storeChildCallback);
-    }
-    object->persisted = true;
-    fclose(fp);
-    if (!object->type->immutable) {
-      _objectSetHash(object, hash);
-    }
+  if (storeFileExists(context->store, objectType(object), hash)) {
+    return;
   }
+  FILE* fp = storeWriteData(context->store, objectType(object), hash);
+  if (composite) {
+    objectSerializeAsComposite(object, fp);
+  } else {
+    objectSerialize(object, fp);
+    objectWalkChildren(object, object, storeChildCallback);
+  }
+  fclose(fp);
 }
 
 void objectStore(LCObjectRef object, LCContextRef context) {
@@ -305,7 +285,7 @@ void objectCache(LCObjectRef object) {
 }
 
 void objectDeleteCache(LCObjectRef object) {
-  if (object->persisted) {
+  if (storeFileExists(objectContext(object)->store, objectType(object), _objectHash(object))) {
     objectDataDealloc(object);
   }
 }
