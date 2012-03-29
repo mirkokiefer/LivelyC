@@ -7,7 +7,7 @@
 typedef LCObjectRef LCMemoryStoreRef;
 extern LCTypeRef LCTypeMemoryStore;
 
-LCMemoryStoreRef LCMemoryStoreCreate();
+LCMemoryStoreRef LCMemoryStoreCreate(void);
 LCStoreRef LCMemoryStoreStoreObject(LCMemoryStoreRef store);
 
 #endif

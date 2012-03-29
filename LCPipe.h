@@ -7,7 +7,7 @@
 typedef LCObjectRef LCPipeRef;
 extern LCTypeRef LCTypeMemoryStream;
 
-LCPipeRef LCPipeCreate();
+LCPipeRef LCPipeCreate(void);
 FILE* LCPipeWriteFile(LCPipeRef streamObj);
 FILE* LCPipeReadFile(LCPipeRef streamObj);
 size_t LCPipeLength(LCPipeRef streamObj);
