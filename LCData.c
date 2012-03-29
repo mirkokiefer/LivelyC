@@ -28,10 +28,11 @@ struct LCType typeData = {
 
 LCTypeRef LCTypeData = &typeData;
 
-static dataRef dataCreateStruct(size_t length) {
+static dataRef dataCreateStruct() {
   dataRef newData = malloc(sizeof(struct data));
   if (newData) {
-    newData->length = length;
+    newData->length = 0;
+    newData->data = NULL;
   }
   return newData;
 }
@@ -40,7 +41,7 @@ LCDataRef LCDataCreate(LCByte data[], size_t length) {
   LCByte* dataBuffer = malloc(sizeof(LCByte)*length);
   if (dataBuffer) {
     memcpy(dataBuffer, data, length*sizeof(LCByte));
-    dataRef newData = dataCreateStruct(length);
+    dataRef newData = dataCreateStruct();
     newData->data = dataBuffer;
     return objectCreate(LCTypeData, newData);
   } else {
@@ -78,11 +79,13 @@ int dataSerializeDataBuffered(LCObjectRef object, fpos_t offset, size_t bufferLe
 
 void* dataDeserialize(LCDataRef data, FILE *fd) {
   size_t length = fileLength(fd);
-  dataRef newData = malloc(sizeof(struct data) + length*sizeof(LCByte));
-  if (newData) {
-    newData->length = length;
-    readFromFile(fd, newData->data, length);
-    return newData;
+  LCByte *dataBuffer = malloc(length*sizeof(LCByte));
+  if (dataBuffer) {
+    readFromFile(fd, dataBuffer, length);
+    dataRef dataStruct = dataCreateStruct();
+    dataStruct->data = dataBuffer;
+    dataStruct->length = length;
+    return dataStruct;
   } else {
     return NULL;
   }
