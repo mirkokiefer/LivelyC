@@ -159,12 +159,7 @@ LCArrayRef LCArrayCreateArrayWithMap(LCArrayRef array, void* info, LCCreateEachC
   for (LCInteger i=0; i<arrayLength; i++) {
     newObjects[i] = each(i, info, arrayObjects[i]);
   }
-  LCArrayRef newArray;
-  if (objectType(array)==LCTypeArray) {
-    newArray = LCArrayCreate(newObjects, arrayLength);
-  } else {
-    newArray = LCMutableArrayCreate(newObjects, arrayLength);
-  }
+  LCArrayRef newArray = LCArrayCreate(newObjects, arrayLength);
   for (LCInteger i=0; i<arrayLength; i++) {
     objectRelease(newObjects[i]);
   }
@@ -272,6 +267,20 @@ void LCMutableArrayRemoveObject(LCMutableArrayRef array, LCObjectRef object) {
 
 void LCMutableArraySort(LCMutableArrayRef array) {
   objectsSort(LCMutableArrayObjects(array), LCMutableArrayLength(array));
+}
+
+LCMutableArrayRef LCArrayCreateMutableArrayWithMap(LCArrayRef array, void* info, LCCreateEachCb each) {
+  size_t arrayLength = LCArrayLength(array);
+  LCArrayRef* arrayObjects = LCArrayObjects(array);
+  LCArrayRef newObjects[arrayLength];
+  for (LCInteger i=0; i<arrayLength; i++) {
+    newObjects[i] = each(i, info, arrayObjects[i]);
+  }
+  LCArrayRef newArray = LCMutableArrayCreate(newObjects, arrayLength);
+  for (LCInteger i=0; i<arrayLength; i++) {
+    objectRelease(newObjects[i]);
+  }
+  return newArray;
 }
 
 bool resizeBuffer(arrayDataRef array, size_t length) {
