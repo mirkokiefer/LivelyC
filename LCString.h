@@ -13,7 +13,7 @@ LCStringRef LCStringCreate(char *string);
 LCStringRef LCStringCreateFromHash(LCContextRef context, char hash[HASH_LENGTH]);
 LCStringRef LCStringCreateFromChars(char* characters, size_t length);
 LCStringRef LCStringCreateFromStrings(LCStringRef strings[], size_t length);
-LCStringRef LCStringCreateFromStringsWithDelimiter(LCStringRef strings[], size_t length, char *delimiter);
+LCStringRef LCStringCreateFromStringsWithDelim(LCStringRef strings[], size_t length, char *delimiter);
 LCStringRef LCStringCreateFromStringArray(char* characters[], size_t length);
 LCStringRef LCStringCreateFromStringArrayWithDelim(char* strings[], size_t length, char *delimiter);
 LCStringRef LCStringCreateFromData(LCDataRef data);
