@@ -80,6 +80,9 @@ void* objectData(LCObjectRef object) {
 }
 
 LCTypeRef objectType(LCObjectRef object) {
+  if (!object) {
+    return NULL;
+  }
   return object->type;
 }
 
