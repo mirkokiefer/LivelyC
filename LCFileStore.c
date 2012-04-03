@@ -3,9 +3,9 @@
 #include "LCString.h"
 #include "LCUtils.h"
 
-FILE* fileStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
-void fileStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
-FILE* fileStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
+FILE* fileStoreWrite(void *cookie, LCTypeRef type, char *key);
+void fileStoreDelete(void *cookie, LCTypeRef type, char *key);
+FILE* fileStoreRead(void *cookie, LCTypeRef type, char *key);
 void fileStoreDealloc(LCObjectRef store);
 static void* fileStoreInitData();
 LCStringRef createDirectoryPath(LCFileStoreRef store, LCTypeRef type);
@@ -48,21 +48,21 @@ LCStoreRef LCFileStoreStoreObject(LCFileStoreRef store) {
   return storeCreate(store, fileStoreWrite, fileStoreDelete, fileStoreRead);
 }
 
-FILE* fileStoreWrite(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
+FILE* fileStoreWrite(void *cookie, LCTypeRef type, char *key) {
   LCStringRef directoryPath = createDirectoryPath(cookie, type);
   makeDirectory(LCStringChars(directoryPath));
-  LCStringRef filePath = createFilePath(cookie, type, hash);
+  LCStringRef filePath = createFilePath(cookie, type, key);
   FILE *fp = fopen(LCStringChars(filePath), "w");
   objectRelease(filePath);
   return fp;
 }
 
-void fileStoreDelete(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
+void fileStoreDelete(void *cookie, LCTypeRef type, char *key) {
   // TODO
 }
 
-FILE* fileStoreRead(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]) {
-  LCStringRef filePath = createFilePath(cookie, type, hash);
+FILE* fileStoreRead(void *cookie, LCTypeRef type, char *key) {
+  LCStringRef filePath = createFilePath(cookie, type, key);
   FILE *fp = fopen(LCStringChars(filePath), "r");
   objectRelease(filePath);
   return fp;
@@ -81,9 +81,9 @@ LCStringRef createDirectoryPath(LCFileStoreRef store, LCTypeRef type) {
   return LCStringCreateFromStringArray(strings, 3);
 }
 
-LCStringRef createFilePath(LCFileStoreRef store, LCTypeRef type, char *hash) {
+LCStringRef createFilePath(LCFileStoreRef store, LCTypeRef type, char *key) {
   LCStringRef directory = createDirectoryPath(store, type);
-  char *strings[] = {LCStringChars(directory), hash, ".txt"};
+  char *strings[] = {LCStringChars(directory), key, ".txt"};
   LCStringRef path = LCStringCreateFromStringArray(strings, 3);
   objectRelease(directory);
   return path;

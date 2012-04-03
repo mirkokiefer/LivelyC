@@ -38,9 +38,9 @@ typedef void(*closeStreamFun)(void *cookie);
 
 typedef void*(*LCCreateEachCb)(LCInteger i, void* info, void* each);
 
-typedef FILE*(*writeData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
-typedef void(*deleteData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
-typedef FILE*(*readData)(void *cookie, LCTypeRef type, char hash[HASH_LENGTH]);
+typedef FILE*(*writeData)(void *cookie, LCTypeRef type, char *key);
+typedef void(*deleteData)(void *cookie, LCTypeRef type, char *key);
+typedef FILE*(*readData)(void *cookie, LCTypeRef type, char *key);
 
 typedef void (*callback)(void *cookie);
 typedef void(*childCallback) (void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite);
