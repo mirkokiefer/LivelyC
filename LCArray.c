@@ -62,10 +62,6 @@ static void arraySetObjects(arrayDataRef data, LCObjectRef objects[], size_t len
 }
 
 LCArrayRef LCArrayCreate(LCObjectRef objects[], size_t length) {
-  if (!objectsImmutable(objects, length)) {
-    perror(ErrorObjectImmutable);
-    return NULL;
-  }
   arrayDataRef newArray = arrayInitData();
   newArray->objects = NULL;
   arraySetObjects(newArray, objects, length);
