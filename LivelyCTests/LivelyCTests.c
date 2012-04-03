@@ -158,6 +158,13 @@ static char* test_array() {
   mu_assert("LCArrayCreateArrayWithMap",
             LCStringEqualCString(LCArrayObjectAtIndex(mappedArray, 0), string1Hash));
   
+  LCArrayRef pathArray1 = createPathArray(LCStringCreate("123/457/789"));
+  LCArrayRef pathArray2 = createPathArray(LCStringCreate("123/678/789"));
+  LCArrayRef pathArray3 = createPathArray(LCStringCreate("234"));
+  mu_assert("LCArray compare", objectCompare(pathArray1, pathArray2)==LCSmaller &&
+            objectCompare(pathArray1, pathArray3)==LCSmaller && 
+            objectCompare(pathArray2, pathArray1)==LCGreater && 
+            objectCompare(pathArray2, pathArray3)==LCSmaller);
   return 0;
 }
 

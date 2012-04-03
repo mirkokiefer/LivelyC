@@ -167,7 +167,27 @@ LCArrayRef LCArrayCreateArrayWithMap(LCArrayRef array, void* info, LCCreateEachC
 }
 
 LCCompare arrayCompare(LCObjectRef array1, LCObjectRef array2) {
-  return objectCompare(LCArrayObjectAtIndex(array1, 0), LCArrayObjectAtIndex(array2, 0));
+  LCCompare result;
+  size_t array1Length = LCArrayLength(array1);
+  size_t array2Length = LCArrayLength(array2);
+  size_t checkLength;
+  if (LCArrayLength(array1) == LCArrayLength(array2)) {
+    checkLength = array1Length;
+    result = LCEqual;
+  } else if (LCArrayLength(array1) > LCArrayLength(array2)) {
+    checkLength = array2Length;
+    result = LCGreater;
+  } else {
+    checkLength = array1Length;
+    result = LCSmaller;
+  }
+  for (LCInteger i=0; i<checkLength; i++) {
+    LCCompare eachResult = objectCompare(LCArrayObjectAtIndex(array1, i), LCArrayObjectAtIndex(array2, i));
+    if (eachResult != LCEqual) {
+      return eachResult;
+    }
+  }
+  return result;
 }
 
 void arrayDealloc(LCObjectRef object) {
