@@ -38,7 +38,7 @@ typedef LCTypeRef(*stringToType)(char *typeString);
 typedef void(*writeStreamFun)(void *cookie, LCByte data[], size_t length);
 typedef void(*closeStreamFun)(void *cookie);
 
-typedef void*(*LCCreateEachCb)(LCInteger i, void* info, void* each);
+typedef LCObjectRef(*LCCreateEachCb)(LCInteger i, void* info, LCObjectRef each);
 
 typedef FILE*(*writeData)(void *cookie, LCTypeRef type, char *key);
 typedef void(*deleteData)(void *cookie, LCTypeRef type, char *key);
