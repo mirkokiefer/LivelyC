@@ -2,8 +2,6 @@
 #include "LivelyCTests.h"
 #include "minuit.h"
 
-void* arrayMap(LCInteger i, void* info, void* each);
-
 int tests_run = 0;
 
 static char* test_retain_counting() {
@@ -87,7 +85,7 @@ static char* test_string() {
   return 0;
 }
 
-void* arrayMap(LCInteger i, void* info, void* each) {
+static LCObjectRef arrayMap(LCInteger i, void* info, LCObjectRef each) {
   LCStringRef string = (LCStringRef)each;
   char hash[HASH_LENGTH];
   objectHash(string, hash);
