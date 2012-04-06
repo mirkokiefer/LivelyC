@@ -31,6 +31,8 @@ typedef struct LCType* LCTypeRef;
 typedef struct LCStore*  LCStoreRef;
 typedef struct LCContext* LCContextRef;
 
+typedef LCObjectRef LCStringRef;
+
 typedef LCTypeRef(*stringToType)(char *typeString);
 
 typedef void(*writeStreamFun)(void *cookie, LCByte data[], size_t length);
@@ -85,6 +87,7 @@ void objectSerializeAsComposite(LCObjectRef object, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
 void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]);
+LCStringRef objectHashString(LCObjectRef object);
 void objectStore(LCObjectRef object, LCContextRef context);
 void objectStoreAsComposite(LCObjectRef object, LCContextRef context);
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);

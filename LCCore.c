@@ -233,6 +233,12 @@ void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
   }
 }
 
+LCStringRef objectHashString(LCObjectRef object) {
+  char hash[HASH_LENGTH];
+  objectHash(object, hash);
+  return LCStringCreate(hash);
+}
+
 static void storeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite) {
   LCContextRef context = (LCContextRef)cookie;
   for (LCInteger i=0; i<length; i++) {

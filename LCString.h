@@ -6,7 +6,6 @@
 #include "LCArray.h"
 #include "LCData.h"
 
-typedef LCObjectRef LCStringRef;
 extern LCTypeRef LCTypeString;
 
 LCStringRef LCStringCreate(char *string);
