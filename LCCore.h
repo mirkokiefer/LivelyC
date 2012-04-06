@@ -87,7 +87,7 @@ void objectSerializeAsComposite(LCObjectRef object, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
 void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]);
-LCStringRef objectHashString(LCObjectRef object);
+LCStringRef objectCreateHashString(LCObjectRef object);
 void objectStore(LCObjectRef object, LCContextRef context);
 void objectStoreAsComposite(LCObjectRef object, LCContextRef context);
 void objectsStore(LCObjectRef objects[], size_t length, LCContextRef context);

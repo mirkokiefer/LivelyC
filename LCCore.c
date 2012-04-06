@@ -233,7 +233,7 @@ void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
   }
 }
 
-LCStringRef objectHashString(LCObjectRef object) {
+LCStringRef objectCreateHashString(LCObjectRef object) {
   char hash[HASH_LENGTH];
   objectHash(object, hash);
   return LCStringCreate(hash);
