@@ -1,7 +1,6 @@
 
 #include "LCUtils.h"
 #include "LCPipe.h"
-#include "url_open.h"
 
 #define READ_BUFFER_SIZE 1024
 
