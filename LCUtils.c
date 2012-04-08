@@ -1,6 +1,7 @@
 
 #include "LCUtils.h"
 #include "LCPipe.h"
+#include "url_open.h"
 
 #define READ_BUFFER_SIZE 1024
 
@@ -131,4 +132,13 @@ int pipeFileToFunction(void *cookie, FILE *read, writeStreamFun writeFun, size_t
     writeFun(cookie, buffer, lengthRead);
   }
   return 0; 
+}
+
+int pipeURLToFile(URL_FILE *read, FILE *write, size_t bufferLength) {
+  LCByte buffer[bufferLength];
+  while (!url_feof(read)) {
+    size_t lengthRead = url_fread(buffer, sizeof(LCByte), bufferLength, read);
+    fwrite(buffer, sizeof(LCByte), lengthRead, write);
+  }
+  return 0;
 }
