@@ -5,6 +5,8 @@
 #include <ftw.h>
 #include <unistd.h>
 
+#include "url_open.h"
+
 #include "LCCore.h"
 #include "LCString.h"
 #include "LCArray.h"
@@ -27,6 +29,6 @@ int deleteDirectory(char *path);
 LCStringRef getHomeFolder(void);
 int pipeFiles(FILE *read, FILE *write, size_t bufferLength);
 int pipeFileToFunction(void *cookie, FILE *read, writeStreamFun writeFun, size_t bufferLength);
-
+int pipeURLToFile(URL_FILE *read, FILE *write, size_t bufferLength);
 
 #endif
