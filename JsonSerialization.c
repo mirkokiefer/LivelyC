@@ -6,7 +6,7 @@ struct LCSerializationCookie {
   FILE *fp;
   LCObjectRef object;
   bool first;
-  bool composite;
+  LCInteger levels;
 };
 
 static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[], size_t length, bool composite) {
@@ -25,9 +25,13 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
       fprintf(info->fp, ",");
     }
     fprintf(info->fp, "\{\"type\": \"%s\", ", typeName(objectType(objects[i])));
-    if (info->composite) {
+    if (info->levels != 0) {
       fprintf(info->fp, "\"object\": ");
-      objectSerializeAsComposite(objects[i], info->fp);
+      if (info->levels == -1) {
+        objectSerializeAsComposite(objects[i], info->fp);
+      } else {
+        objectSerializeToLevels(objects[i], info->levels-1, info->fp);
+      }
     } else {
       char hash[HASH_LENGTH];
       objectHash(objects[i], hash);
@@ -38,16 +42,24 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
   fprintf(info->fp, "]");
 }
 
-void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw, walkChildren walkFun) {
+void objectSerializeJsonToLevels(LCObjectRef object, LCInteger levels, FILE *fpw, walkChildren walkFun) {
   struct LCSerializationCookie cookie = {
     .fp = fpw,
     .object = object,
     .first = true,
-    .composite = composite
+    .levels = levels
   };
   fprintf(fpw, "{");
   walkFun(object, &cookie, serializeChildCallback);
   fprintf(fpw, "}");
+}
+
+void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw, walkChildren walkFun) {
+  if (composite) {
+    objectSerializeJsonToLevels(object, -1, fpw, walkFun);
+  } else {
+    objectSerializeJsonToLevels(object, 0, fpw, walkFun);
+  }
 }
 
 void objectDeserializeJson(LCObjectRef object, json_value *json, storeChildren storeFun) {
