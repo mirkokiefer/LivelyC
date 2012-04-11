@@ -168,11 +168,11 @@ void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback
   }
 }
 
-static void objectSerializeWalkingChildren(LCObjectRef object, bool composite, FILE *fpw) {
-  objectSerializeJson(object, composite, fpw, objectWalkChildren);
+static void objectSerializeWalkingChildren(LCObjectRef object, LCInteger levels, FILE *fpw) {
+  objectSerializeJsonToLevels(object, levels, fpw, objectWalkChildren);
 }
 
-static void objectSerializeWithCompositeParam(LCObjectRef object, bool composite, FILE *fpw) {
+void objectSerializeToLevels(LCObjectRef object, LCInteger levels, FILE *fpw) {
   if (object->type->serializeDataBuffered) {
     fpos_t offset = 0;
     while (object->type->serializeDataBuffered(object, offset, FILE_BUFFER_LENGTH, fpw) == FILE_BUFFER_LENGTH) {
@@ -182,16 +182,16 @@ static void objectSerializeWithCompositeParam(LCObjectRef object, bool composite
   } else if (object->type->serializeData) {
     object->type->serializeData(object, fpw);
   } else {
-    objectSerializeWalkingChildren(object, composite, fpw);
+    objectSerializeWalkingChildren(object, levels, fpw);
   }
 }
 
 void objectSerializeAsComposite(LCObjectRef object, FILE *fpw) {
-  objectSerializeWithCompositeParam(object, true, fpw);
+  objectSerializeToLevels(object, -1, fpw);
 }
 
 void objectSerialize(LCObjectRef object, FILE *fpw) {
-  objectSerializeWithCompositeParam(object, false, fpw);
+  objectSerializeToLevels(object, 0, fpw);
 }
 
 void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {

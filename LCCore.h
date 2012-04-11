@@ -83,6 +83,7 @@ void objectReleaseAlt(void *object);
 LCInteger objectRetainCount(LCObjectRef object);
 LCCompare objectCompare(LCObjectRef object1, LCObjectRef object2);
 LCContextRef objectContext(LCObjectRef object);
+void objectSerializeToLevels(LCObjectRef object, LCInteger levels, FILE *fpw);
 void objectSerializeAsComposite(LCObjectRef object, FILE *fpw);
 void objectSerialize(LCObjectRef object, FILE* fd);
 void objectDeserialize(LCObjectRef object, FILE* fd);
