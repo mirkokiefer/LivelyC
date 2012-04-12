@@ -288,7 +288,7 @@ static char* test_object_persistence() {
   LCFileStoreRef fileStore = LCFileStoreCreate(LCStringChars(testPath));
   
   char *fileTest = test_object_persistence_with_store(LCFileStoreStoreObject(fileStore), "file");
-  deleteDirectory(LCStringChars(testPath));
+  //deleteDirectory(LCStringChars(testPath));
   return fileTest;
 }
 

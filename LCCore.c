@@ -8,7 +8,6 @@
 #define FILE_BUFFER_LENGTH 1024
 
 void objectWalkChildren(LCObjectRef object, void *cookie, childCallback callback);
-void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length);
 static void objectStoreWithCompositeParam(LCObjectRef object, bool composite, LCContextRef context);
 
 struct LCObject {
@@ -180,7 +179,7 @@ void objectSerializeToLevels(LCObjectRef object, LCInteger levels, FILE *fpw) {
       fflush(fpw);
     }
   } else if (object->type->serializeData) {
-    object->type->serializeData(object, fpw);
+    objectSerializeTextToJson(object, fpw);
   } else {
     objectSerializeWalkingChildren(object, levels, fpw);
   }
@@ -194,18 +193,23 @@ void objectSerialize(LCObjectRef object, FILE *fpw) {
   objectSerializeToLevels(object, 0, fpw);
 }
 
+void objectSerializeBinaryData(LCObjectRef object, FILE *fd) {
+  object->type->serializeData(object, fd);
+}
+
 void objectStoreChildren(LCObjectRef object, char *key, LCObjectRef objects[], size_t length) {
   object->type->storeChildren(object, key, objects, length);
 }
 
 static void objectInitData(LCObjectRef object) {
-  object->data = object->type->initData();
+  if (object->type->initData) {
+    object->data = object->type->initData();
+  }
 }
 
 void objectDeserialize(LCObjectRef object, FILE* fd) {
-  if (object->type->deserializeData) {
-    void* data = object->type->deserializeData(object, fd);
-    object->data = data;
+  if (object->type->deserializeData && object->type->serializationFormat == LCBinary) {
+    objectDeserializeBinaryData(object, fd);
   } else {
     objectInitData(object);
     LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
@@ -213,9 +217,13 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
     LCMutableDataAppend(data, (LCByte*)"\0", 1);
     char *jsonString = (char*)LCMutableDataDataRef(data);
     json_value *json = json_parse(jsonString);
-    objectDeserializeJson(object, json, objectStoreChildren);
+    objectDeserializeJson(object, json);
     objectRelease(data);
   }
+}
+
+void objectDeserializeBinaryData(LCObjectRef object, FILE *fd) {
+  object->data = object->type->deserializeData(object, fd);
 }
 
 void objectHash(LCObjectRef object, char hashBuffer[HASH_LENGTH]) {
