@@ -237,6 +237,12 @@ static char* test_object_persistence_with_store(LCStoreRef store, char *storeTyp
   objectDeleteCache(test, context);
   mu_assert("string persistence", LCStringEqualCString(test, string));
   
+  char hash[HASH_LENGTH];
+  objectHash(test, hash);
+  FILE *fd = storeReadData(store, LCTypeString, hash);
+  LCStringRef stringFromFile = objectCreateFromFile(context, fd);
+  mu_assert("objectCreateFromFile", LCStringEqualCString(stringFromFile, string));
+
   LCStringRef string1 = LCStringCreate("abc");
   LCStringRef string2 = LCStringCreate("def");
   LCStringRef string3 = LCStringCreate("ghi");

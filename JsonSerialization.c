@@ -1,6 +1,10 @@
 
 #include "JsonSerialization.h"
 #include "LCMemoryStream.h"
+#include "LCMutableData.h"
+#include "LCUtils.h"
+
+LCObjectRef objectCreateFromJson(json_value *json, LCContextRef context);
 
 struct LCSerializationCookie {
   FILE *fp;
@@ -100,6 +104,23 @@ static void objectDeserializeDataFromJson(LCObjectRef object, json_value *json) 
   }
 }
 
+static json_value* fileToJson(FILE *fd) {
+  LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
+  LCMutableDataAppendFromFile(data, fd, fileLength(fd));
+  LCMutableDataAppend(data, (LCByte*)"\0", 1);
+  char *jsonString = (char*)LCMutableDataDataRef(data);
+  json_value *json = json_parse(jsonString);
+  objectRelease(data);
+  return json;
+}
+
+LCObjectRef objectCreateFromJsonFile(FILE *fd, LCContextRef context) {
+  json_value *json = fileToJson(fd);
+  LCObjectRef object = objectCreateFromJson(json, context);
+  json_value_free(json);
+  return object;
+}
+
 LCObjectRef objectCreateFromJson(json_value *json, LCContextRef context) {
   char *typeString;
   char *hash = NULL;
@@ -125,7 +146,8 @@ LCObjectRef objectCreateFromJson(json_value *json, LCContextRef context) {
   return object;
 }
 
-void objectDeserializeJson(LCObjectRef object, json_value *json) {
+void objectDeserializeJsonFile(LCObjectRef object, FILE *fd) {
+  json_value *json = fileToJson(fd);
   json_value *children = NULL;
   for (LCInteger k=0; k<json->u.object.length; k++) {
     char* objectInfoKey = json->u.object.values[k].name;
@@ -135,4 +157,5 @@ void objectDeserializeJson(LCObjectRef object, json_value *json) {
     }
   }
   objectDeserializeDataFromJson(object, children);
+  json_value_free(json);
 }
