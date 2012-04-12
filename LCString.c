@@ -148,18 +148,16 @@ LCCompare stringCompare(LCStringRef object1, LCStringRef object2) {
 }
 
 void stringSerialize(LCObjectRef object, FILE *fp) {
-  fprintf(fp, "\"%s\"", LCStringChars(object));
+  fprintf(fp, "%s", LCStringChars(object));
 }
 
 void* stringDeserialize(LCStringRef object, FILE *fp) {
   LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
   LCMutableDataAppendFromFile(data, fp, fileLength(fp));
   char* serializedString = (char*)LCMutableDataDataRef(data);
-  size_t stringLength = LCDataLength(data)-2;
-  char* buffer = malloc(sizeof(char)*(stringLength+1));
+  char* buffer = malloc(sizeof(char)*strlen(serializedString));
   if (buffer) {
-    buffer[stringLength] = '\0';
-    memcpy(buffer, &(serializedString[1]), sizeof(char)*stringLength);
+    strcpy(buffer, serializedString);
     objectRelease(data);
     return buffer;
   } else {

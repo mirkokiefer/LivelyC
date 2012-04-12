@@ -4,8 +4,10 @@
 
 #include "LCCore.h"
 
+void objectSerializeTextToJson(LCObjectRef object, FILE *fpw);
 void objectSerializeJsonToLevels(LCObjectRef object, LCInteger levels, FILE *fp, walkChildren walkFun);
 void objectSerializeJson(LCObjectRef object, bool composite, FILE *fp, walkChildren walkFun);
-void objectDeserializeJson(LCObjectRef object, json_value *json, storeChildren storeFun);
+LCObjectRef objectCreateFromJson(json_value *json, LCContextRef context);
+void objectDeserializeJson(LCObjectRef object, json_value *json);
 
 #endif

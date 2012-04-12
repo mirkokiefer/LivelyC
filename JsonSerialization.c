@@ -24,9 +24,7 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
     if (i>0) {
       fprintf(info->fp, ",");
     }
-    fprintf(info->fp, "\{\"type\": \"%s\", ", typeName(objectType(objects[i])));
     if (info->levels != 0) {
-      fprintf(info->fp, "\"object\": ");
       if (info->levels == -1) {
         objectSerializeAsComposite(objects[i], info->fp);
       } else {
@@ -35,11 +33,16 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
     } else {
       char hash[HASH_LENGTH];
       objectHash(objects[i], hash);
-      fprintf(info->fp, "\"hash\": \"%s\"", hash);
+      fprintf(info->fp, "\{\"type\": \"%s\", \"hash\": \"%s\"}", typeName(objectType(objects[i])), hash);
     }
-    fprintf(info->fp, "}");
   }
   fprintf(info->fp, "]");
+}
+
+void objectSerializeTextToJson(LCObjectRef object, FILE *fpw) {
+  fprintf(fpw, "\{\"type\": \"%s\", \"data\": \"", typeName(objectType(object)));
+  objectSerializeBinaryData(object, fpw);
+  fprintf(fpw, "\"}");
 }
 
 void objectSerializeJsonToLevels(LCObjectRef object, LCInteger levels, FILE *fpw, walkChildren walkFun) {
@@ -49,9 +52,9 @@ void objectSerializeJsonToLevels(LCObjectRef object, LCInteger levels, FILE *fpw
     .first = true,
     .levels = levels
   };
-  fprintf(fpw, "{");
+  fprintf(fpw, "\{\"type\": \"%s\", \"data\": {", typeName(objectType(object)));
   walkFun(object, &cookie, serializeChildCallback);
-  fprintf(fpw, "}");
+  fprintf(fpw, "}}");
 }
 
 void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw, walkChildren walkFun) {
@@ -62,7 +65,12 @@ void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw, walkChil
   }
 }
 
-void objectDeserializeJson(LCObjectRef object, json_value *json, storeChildren storeFun) {
+static void objectDeserializeBinaryDataFromJson(LCObjectRef object, json_value *children) {
+  char *dataStringJson = children->u.string.ptr;
+  objectDeserializeBinaryData(object, createMemoryReadStream(NULL, (LCByte*)dataStringJson, strlen(dataStringJson)+1, false, NULL));
+}
+
+static void objectDeserializeObjectDataFromJson(LCObjectRef object, json_value *json) {
   LCContextRef context = objectContext(object);
   for (LCInteger i=0; i<json->u.object.length; i++) {
     char *key = json->u.object.values[i].name;
@@ -74,38 +82,57 @@ void objectDeserializeJson(LCObjectRef object, json_value *json, storeChildren s
     
     for (LCInteger j=0; j<objectsLength; j++) {
       json_value *objectInfo = objectsInfo[j];
-      char *typeString;
-      char *hash = NULL;
-      json_value *embeddedObject = NULL;
-      for (LCInteger k=0; k<objectInfo->u.object.length; k++) {
-        char* objectInfoKey = objectInfo->u.object.values[k].name;
-        json_value *objectInfoValue = objectInfo->u.object.values[k].value;
-        if (strcmp(objectInfoKey, "type")==0) {
-          typeString = objectInfoValue->u.string.ptr;
-        } else if(strcmp(objectInfoKey, "hash")==0) {
-          hash = objectInfoValue->u.string.ptr;
-        } else if (strcmp(objectInfoKey, "object")==0) {
-          embeddedObject = objectInfoValue;
-        }
-      }
-      if (hash) {
-        objects[j] = objectCreateFromContext(context, contextStringToType(context, typeString), hash);
-      } else if(embeddedObject) {
-        objects[j] = objectCreate(contextStringToType(context, typeString), NULL);
-        if (typeBinarySerialized(objectType(objects[j]))) {
-          char *dataString = embeddedObject->u.string.ptr;
-          size_t dataStringLength = embeddedObject->u.string.length;
-          char dataStringJson[dataStringLength+2];
-          sprintf(dataStringJson, "\"%s\"", dataString);
-          objectDeserialize(objects[j], createMemoryReadStream(NULL, (LCByte*)dataStringJson, dataStringLength+2, false, NULL));
-        } else {
-          objectDeserializeJson(objects[j], embeddedObject, storeFun);
-        }
-      }
+      objects[j] = objectCreateFromJson(objectInfo, context);
     }
-    storeFun(object, key, objects, objectsLength);
+    
+    objectStoreChildren(object, key, objects, objectsLength);
     for (LCInteger j=0; j<objectsLength; j++) {
       objectRelease(objects[j]);
     }
   }
+}
+
+static void objectDeserializeDataFromJson(LCObjectRef object, json_value *json) {
+  if (typeBinarySerialized(objectType(object))) {
+    objectDeserializeBinaryDataFromJson(object, json);
+  } else {
+    objectDeserializeObjectDataFromJson(object, json);
+  }
+}
+
+LCObjectRef objectCreateFromJson(json_value *json, LCContextRef context) {
+  char *typeString;
+  char *hash = NULL;
+  json_value *children = NULL;
+  for (LCInteger k=0; k<json->u.object.length; k++) {
+    char* objectInfoKey = json->u.object.values[k].name;
+    json_value *objectInfoValue = json->u.object.values[k].value;
+    if (strcmp(objectInfoKey, "type")==0) {
+      typeString = objectInfoValue->u.string.ptr;
+    } else if(strcmp(objectInfoKey, "hash")==0) {
+      hash = objectInfoValue->u.string.ptr;
+    } else if (strcmp(objectInfoKey, "data")==0) {
+      children = objectInfoValue;
+    }
+  }
+  LCObjectRef object;
+  if (hash) {
+    object = objectCreateFromContext(context, contextStringToType(context, typeString), hash);
+  } else if(children) {
+    object = objectCreate(contextStringToType(context, typeString), NULL);
+    objectDeserializeDataFromJson(object, children);
+  }
+  return object;
+}
+
+void objectDeserializeJson(LCObjectRef object, json_value *json) {
+  json_value *children = NULL;
+  for (LCInteger k=0; k<json->u.object.length; k++) {
+    char* objectInfoKey = json->u.object.values[k].name;
+    json_value *objectInfoValue = json->u.object.values[k].value;
+    if (strcmp(objectInfoKey, "data")==0) {
+      children = objectInfoValue;
+    }
+  }
+  objectDeserializeDataFromJson(object, children);
 }
