@@ -182,8 +182,10 @@ void objectSerializeToLevels(LCObjectRef object, LCInteger levels, FILE *fpw) {
       offset = offset + FILE_BUFFER_LENGTH;
       fflush(fpw);
     }
-  } else if (object->type->serializeData) {
+  } else if (object->type->serializeData && object->type->serializationFormat == LCText) {
     objectSerializeTextToJson(object, fpw);
+  } else if (object->type->serializeData && object->type->serializationFormat == LCBinary) {
+    objectSerializeBinaryData(object, fpw);
   } else {
     objectSerializeWalkingChildren(object, levels, fpw);
   }
