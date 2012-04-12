@@ -71,6 +71,10 @@ LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char h
   return object;
 }
 
+LCObjectRef objectCreateFromFile(LCContextRef context, FILE *fd) {
+  return objectCreateFromJsonFile(fd, context);
+}
+
 void* objectData(LCObjectRef object) {
   if (!object->data) {
     objectCache(object);
@@ -212,13 +216,7 @@ void objectDeserialize(LCObjectRef object, FILE* fd) {
     objectDeserializeBinaryData(object, fd);
   } else {
     objectInitData(object);
-    LCMutableDataRef data = LCMutableDataCreate(NULL, 0);
-    LCMutableDataAppendFromFile(data, fd, fileLength(fd));
-    LCMutableDataAppend(data, (LCByte*)"\0", 1);
-    char *jsonString = (char*)LCMutableDataDataRef(data);
-    json_value *json = json_parse(jsonString);
-    objectDeserializeJson(object, json);
-    objectRelease(data);
+    objectDeserializeJsonFile(object, fd);
   }
 }
 
