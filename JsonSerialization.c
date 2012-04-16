@@ -28,7 +28,8 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
     if (i>0) {
       fprintf(info->fp, ",");
     }
-    if (info->levels != 0) {
+    bool serializedAsText = objectType(objects[i])->serializationFormat == LCText;
+    if ((info->levels != 0) && serializedAsText) {
       if (info->levels == -1) {
         objectSerializeAsComposite(objects[i], info->fp);
       } else {
