@@ -62,7 +62,6 @@ struct LCType {
   LCFormat serializationFormat;
   void (*dealloc)(LCObjectRef object);
   LCCompare (*compare)(LCObjectRef object1, LCObjectRef object2);
-  int (*serializeDataBuffered)(LCObjectRef object, fpos_t offset, size_t bufferLength, FILE *fd);
   void (*serializeData)(LCObjectRef object, FILE *fd);
   void* (*deserializeData)(LCObjectRef object, FILE *fd);
   void* (*initData)(void);

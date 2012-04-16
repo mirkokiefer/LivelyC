@@ -176,13 +176,7 @@ static void objectSerializeWalkingChildren(LCObjectRef object, LCInteger levels,
 }
 
 void objectSerializeToLevels(LCObjectRef object, LCInteger levels, FILE *fpw) {
-  if (object->type->serializeDataBuffered) {
-    fpos_t offset = 0;
-    while (object->type->serializeDataBuffered(object, offset, FILE_BUFFER_LENGTH, fpw) == FILE_BUFFER_LENGTH) {
-      offset = offset + FILE_BUFFER_LENGTH;
-      fflush(fpw);
-    }
-  } else if (object->type->serializeData && object->type->serializationFormat == LCText) {
+  if (object->type->serializeData && object->type->serializationFormat == LCText) {
     objectSerializeTextToJson(object, fpw);
   } else if (object->type->serializeData && object->type->serializationFormat == LCBinary) {
     objectSerializeBinaryData(object, fpw);
@@ -349,7 +343,7 @@ LCFormat typeSerializationFormat(LCTypeRef type) {
 }
 
 bool typeBinarySerialized(LCTypeRef type) {
-  if (type->serializeData || type->serializeDataBuffered) {
+  if (type->serializeData) {
     return true;
   } else {
     return false;

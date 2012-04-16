@@ -8,7 +8,7 @@ typedef struct data* dataRef;
 
 #define READ_BUFFER_SIZE 1024
 
-int dataSerializeDataBuffered(LCObjectRef object, fpos_t offset, size_t bufferLength, FILE *fd);
+void dataSerialize(LCObjectRef object, FILE *fp);
 void* dataDeserialize(LCDataRef data, FILE *fd);
 void dataDealloc(LCObjectRef data);
 
@@ -22,7 +22,7 @@ struct LCType typeData = {
   .immutable = true,
   .serializationFormat = LCBinary,
   .dealloc = dataDealloc,
-  .serializeDataBuffered = dataSerializeDataBuffered,
+  .serializeData = dataSerialize,
   .deserializeData = dataDeserialize
 };
 
@@ -76,6 +76,10 @@ int dataSerializeDataBuffered(LCObjectRef object, fpos_t offset, size_t bufferLe
   }
   fwrite(&(data->data[offset]), sizeof(LCByte), bufferLength, fd);
   return bufferLength;
+}
+
+void dataSerialize(LCObjectRef object, FILE *fp) {
+  fwrite(LCDataDataRef(object), sizeof(LCByte), LCDataLength(object), fp);
 }
 
 void* dataDeserialize(LCDataRef data, FILE *fd) {
