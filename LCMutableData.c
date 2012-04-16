@@ -22,10 +22,6 @@ struct LCType typeMutableData = {
 
 LCTypeRef LCTypeMutableData = &typeMutableData;
 
-static void mutableDataReallocData(mutableDataRef data, size_t length) {
-  
-}
-
 static void mutableDataEnsureLength(mutableDataRef dataStruct, size_t length) {
   if (dataStruct->bufferLength < length) {
     size_t newLength = dataStruct->bufferLength * 2 + length;
