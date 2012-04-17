@@ -71,7 +71,7 @@ LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char h
   return object;
 }
 
-LCObjectRef objectCreateFromFile(LCContextRef context, FILE *fd) {
+LCObjectRef objectCreateFromFile(LCContextRef context, LCTypeRef type, FILE *fd) {
   return objectCreateFromJsonFile(fd, context);
 }
 

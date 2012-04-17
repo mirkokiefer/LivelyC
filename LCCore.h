@@ -72,7 +72,7 @@ struct LCType {
 
 LCObjectRef objectCreate(LCTypeRef type, void* data);
 LCObjectRef objectCreateFromContext(LCContextRef context, LCTypeRef type, char hash[HASH_LENGTH]);
-LCObjectRef objectCreateFromFile(LCContextRef context, FILE *fd);
+LCObjectRef objectCreateFromFile(LCContextRef context, LCTypeRef type, FILE *fd);
 void* objectData(LCObjectRef object);
 LCTypeRef objectType(LCObjectRef object);
 bool objectImmutable(LCObjectRef object);

@@ -30,11 +30,13 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
     }
     bool serializedAsText = objectType(objects[i])->serializationFormat == LCText;
     if ((info->levels != 0) && serializedAsText) {
+      fprintf(info->fp, "\{\"type\": \"%s\", \"data\": ", typeName(objectType(objects[i])));
       if (info->levels == -1) {
         objectSerializeAsComposite(objects[i], info->fp);
       } else {
         objectSerializeToLevels(objects[i], info->levels-1, info->fp);
       }
+      fprintf(info->fp, "}");
     } else {
       char hash[HASH_LENGTH];
       objectHash(objects[i], hash);
@@ -45,9 +47,9 @@ static void serializeChildCallback(void *cookie, char *key, LCObjectRef objects[
 }
 
 void objectSerializeTextToJson(LCObjectRef object, FILE *fpw) {
-  fprintf(fpw, "\{\"type\": \"%s\", \"data\": \"", typeName(objectType(object)));
+  fprintf(fpw, "\"");
   objectSerializeBinaryData(object, fpw);
-  fprintf(fpw, "\"}");
+  fprintf(fpw, "\"");
 }
 
 void objectSerializeJsonToLevels(LCObjectRef object, LCInteger levels, FILE *fpw, walkChildren walkFun) {
@@ -57,9 +59,9 @@ void objectSerializeJsonToLevels(LCObjectRef object, LCInteger levels, FILE *fpw
     .first = true,
     .levels = levels
   };
-  fprintf(fpw, "\{\"type\": \"%s\", \"data\": {", typeName(objectType(object)));
+  fprintf(fpw, "{");
   walkFun(object, &cookie, serializeChildCallback);
-  fprintf(fpw, "}}");
+  fprintf(fpw, "}");
 }
 
 void objectSerializeJson(LCObjectRef object, bool composite, FILE *fpw, walkChildren walkFun) {
